@@ -28,7 +28,9 @@ RUN adduser --system --uid 1001 nextjs
 
 # Install curl and uv for runtime
 RUN apk add --no-cache curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/nextjs/.bashrc && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/nextjs/.profile
 
 
 COPY --from=builder /app/public ./public
@@ -42,6 +44,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/src/lib/db/migrations ./src/lib/db/migrations
 
 USER nextjs
+
+# Set PATH to include uv installation
+ENV PATH="/home/nextjs/.local/bin:$PATH"
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
