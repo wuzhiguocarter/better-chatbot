@@ -4,10 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-# Install pnpm and uv
+# Install pnpm
 RUN corepack enable pnpm
-RUN apk add --no-cache python3 py3-pip && \
-    pip3 install --no-cache uv
 
 RUN pnpm install --frozen-lockfile
 
@@ -29,8 +27,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Install uv for runtime
-RUN apk add --no-cache python3 py3-pip && \
-    pip3 install --no-cache uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
 
 COPY --from=builder /app/public ./public
 
