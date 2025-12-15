@@ -10,6 +10,7 @@ services:
       - APP_UID=1000
       - APP_GID=1000
     entrypoint: ["/bin/sh", "/app/docker/entrypoint.sh"]
+    command: ["node", "server.js"]
     volumes:
       - /root/RAGFlowMCP:/app/RAGFlowMCP:rw  # Read-write mount
     env_file:
