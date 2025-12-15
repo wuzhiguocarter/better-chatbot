@@ -26,8 +26,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install uv for runtime
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install curl and uv for runtime
+RUN apk add --no-cache curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh
 
 
 COPY --from=builder /app/public ./public
