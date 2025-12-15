@@ -35,8 +35,8 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install curl, uv, and build tools for Rust compilation
-RUN apk add --no-cache curl build-base rust cargo && \
+# Install curl, uv, build tools for Rust compilation, and Python 3.11
+RUN apk add --no-cache curl build-base rust cargo python3 python3-dev py3-pip && \
     UV_INSTALL_DIR=/usr/local/bin sh -c "$(curl -LsSf https://astral.sh/uv/install.sh)"
 
 
