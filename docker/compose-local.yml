@@ -6,9 +6,12 @@ services:
     ports:
       - '3000:3000'
     environment:
-      - NO_HTTPS=1
+      - NO_HTTPS=1 
+      - APP_UID=1000
+      - APP_GID=1000
+    entrypoint: ["/bin/sh", "/app/docker/entrypoint.sh"]
     volumes:
-      - /root/RAGFlowMCP:/app/RAGFlowMCP
+      - /root/RAGFlowMCP:/app/RAGFlowMCP:rw  # Read-write mount
     env_file:
       - .env
     dns:
