@@ -2,10 +2,12 @@ FROM node:23-alpine AS builder
 ARG DOCKER_BUILD="1"
 WORKDIR /app
 
-COPY . . 
+COPY . .
 
-# Install pnpm
+# Install pnpm and uv
 RUN corepack enable pnpm
+RUN apk add --no-cache python3 py3-pip && \
+    pip3 install --no-cache uv
 
 RUN pnpm install --frozen-lockfile
 
@@ -25,6 +27,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+# Install uv for runtime
+RUN apk add --no-cache python3 py3-pip && \
+    pip3 install --no-cache uv
 
 COPY --from=builder /app/public ./public
 
