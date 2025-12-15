@@ -37,9 +37,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Install curl and uv for runtime
 RUN apk add --no-cache curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/nextjs/.bashrc && \
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/nextjs/.profile
+    UV_INSTALL_DIR=/usr/local/bin sh -c "$(curl -LsSf https://astral.sh/uv/install.sh)"
 
 
 COPY --from=builder /app/public ./public
@@ -55,7 +53,7 @@ COPY --from=builder /app/src/lib/db/migrations ./src/lib/db/migrations
 USER nextjs
 
 # Set PATH to include uv installation
-ENV PATH="/home/nextjs/.local/bin:$PATH"
+ENV PATH="/usr/local/bin:$PATH"
 
 # Configure uv/pip to use Tsinghua PyPI mirror
 ENV PIP_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
