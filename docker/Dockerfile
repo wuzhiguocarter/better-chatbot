@@ -50,6 +50,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy migrations content
 COPY --from=builder /app/src/lib/db/migrations ./src/lib/db/migrations
 
+COPY . .
 USER nextjs
 
 # Set PATH to include uv installation
