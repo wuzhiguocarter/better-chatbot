@@ -2,10 +2,16 @@ FROM node:23-alpine AS builder
 ARG DOCKER_BUILD="1"
 WORKDIR /app
 
+# Use Alibaba Cloud mirror for apk
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 COPY . .
 
 # Install pnpm
 RUN corepack enable pnpm
+
+# Configure pnpm to use Taobao registry
+RUN pnpm config set registry https://registry.npmmirror.com/
 
 RUN pnpm install --frozen-lockfile
 
@@ -22,6 +28,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 # disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Use Alibaba Cloud mirror for apk
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -47,6 +56,10 @@ USER nextjs
 
 # Set PATH to include uv installation
 ENV PATH="/home/nextjs/.local/bin:$PATH"
+
+# Configure uv/pip to use Tsinghua PyPI mirror
+ENV PIP_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
+ENV UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
