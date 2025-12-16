@@ -1,0 +1,139 @@
+{
+  "agent_name": "Worker Agent 2 - Frontend Specialist",
+  "agent_type": "worker",
+  "team": "eval-detail-implementation",
+  "specialization": "Frontend Components & UI",
+  "skills": [
+    "React & Next.js",
+    "TypeScript",
+    "Tailwind CSS",
+    "Component Architecture",
+    "State Management",
+    "Responsive Design",
+    "UI/UX Design"
+  ],
+  "assigned_tasks": [
+    "dynamic-route-page",
+    "main-detail-component",
+    "header-component",
+    "info-cards-component",
+    "results-table-component",
+    "navigation-integration"
+  ],
+  "context": {
+    "project_directory": "/Users/dmeck/project/better-chatbot",
+    "existing_structure": {
+      "eval_page": "/eval - main evaluation list page",
+      "components": "src/components/eval/",
+      "layout": "src/app/(chat)/layout.tsx",
+      "ui_components": "src/components/ui/"
+    },
+    "design_theme": "Luxury tech style (奢华科技风)",
+    "color_scheme": {
+      "backgrounds": ["#1a1a1a", "#2d2d2d"],
+      "accents": ["#f59e0b", "#fbbf24", "#fcd34d"],
+      "text": ["#ffffff", "#e5e5e5", "#a3a3a3"]
+    }
+  },
+  "task_details": {
+    "dynamic-route-page": {
+      "description": "Create /eval/[id] page route with authentication",
+      "requirements": [
+        "Create server-side page with session verification",
+        "Implement dynamic routing for evaluation IDs",
+        "Handle loading and error states",
+        "Maintain consistent layout with existing pages"
+      ],
+      "file_path": "/Users/dmeck/project/better-chatbot/src/app/(chat)/eval/[id]/page.tsx"
+    },
+    "main-detail-component": {
+      "description": "Main evaluation detail component with luxury tech styling",
+      "requirements": [
+        "Create comprehensive detail view component",
+        "Implement data fetching with SWR or React Query",
+        "Apply luxury tech design with charcoal backgrounds",
+        "Include loading states and error boundaries",
+        "Make responsive for all screen sizes"
+      ],
+      "file_path": "/Users/dmeck/project/better-chatbot/src/components/eval/detail/eval-detail-client.tsx"
+    },
+    "header-component": {
+      "description": "Evaluation detail header with actions",
+      "requirements": [
+        "Display evaluation title and status with luxury styling",
+        "Include breadcrumb navigation",
+        "Add action buttons (edit, delete, export)",
+        "Use amber/gold accents for important elements"
+      ],
+      "file_path": "/Users/dmeck/project/better-chatbot/src/components/eval/detail/eval-detail-header.tsx"
+    },
+    "info-cards-component": {
+      "description": "Information cards for metadata and statistics",
+      "requirements": [
+        "Create grid layout for info cards",
+        "Display evaluation metadata, dates, configuration",
+        "Use subtle gradients and borders for luxury feel",
+        "Include hover effects and animations"
+      ],
+      "file_path": "/Users/dmeck/project/better-chatbot/src/components/eval/detail/eval-info-cards.tsx"
+    },
+    "results-table-component": {
+      "description": "Detailed results table with interactive features",
+      "requirements": [
+        "Create comprehensive results table",
+        "Implement sorting and filtering capabilities",
+        "Use luxury tech styling with proper contrast",
+        "Include pagination and export options"
+      ],
+      "file_path": "/Users/dmeck/project/better-chatbot/src/components/eval/detail/eval-results-table.tsx"
+    },
+    "navigation-integration": {
+      "description": "Integrate with existing navigation system",
+      "requirements": [
+        "Add navigation links from eval list to detail pages",
+        "Update sidebar if necessary",
+        "Ensure proper breadcrumb trails",
+        "Maintain consistent navigation patterns"
+      ]
+    }
+  },
+  "design_guidelines": {
+    "luxury_tech_style": {
+      "typography": "Modern, clean fonts with proper hierarchy",
+      "spacing": "Generous padding and consistent margins",
+      "shadows": "Subtle box-shadows for depth",
+      "borders": "Thin borders with amber/gold accents",
+      "animations": "Smooth transitions and hover effects",
+      "gradients": "Subtle gradients for backgrounds and buttons"
+    },
+    "color_usage": {
+      "primary_bg": "Deep charcoal (#1a1a1a) for main backgrounds",
+      "secondary_bg": "Lighter charcoal (#2d2d2d) for cards",
+      "accent_primary": "Amber (#f59e0b) for primary actions",
+      "accent_secondary": "Gold (#fbbf24) for highlights",
+      "text_primary": "White (#ffffff) for main text",
+      "text_secondary": "Light gray (#e5e5e5) for secondary text"
+    }
+  },
+  "component_architecture": {
+    "structure": [
+      "eval-detail-client.tsx - Main client component with data fetching",
+      "eval-detail-header.tsx - Header section with title and actions",
+      "eval-info-cards.tsx - Information cards grid",
+      "eval-results-table.tsx - Results table with filtering",
+      "eval-detail-loading.tsx - Loading skeleton",
+      "eval-detail-error.tsx - Error boundary component"
+    ],
+    "reusable_components": [
+      "stat-card.tsx - Reusable statistic card component",
+      "status-badge.tsx - Status indicator with luxury styling",
+      "action-button.tsx - Styled button component"
+    ]
+  },
+  "file_locations": {
+    "page_route": "/Users/dmeck/project/better-chatbot/src/app/(chat)/eval/[id]/",
+    "components": "/Users/dmeck/project/better-chatbot/src/components/eval/detail/",
+    "types": "/Users/dmeck/project/better-chatbot/src/types/eval/",
+    "hooks": "/Users/dmeck/project/better-chatbot/src/hooks/eval/"
+  }
+}

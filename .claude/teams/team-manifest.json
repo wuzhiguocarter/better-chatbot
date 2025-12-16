@@ -1,0 +1,16 @@
+{
+  "teams": [
+    {
+      "team_name": "eval-detail-implementation",
+      "team_config_file": "/Users/dmeck/project/better-chatbot/.claude/teams/eval-detail-implementation.json",
+      "agents": [
+        "/Users/dmeck/project/better-chatbot/.claude/agents/worker-eval-backend.json",
+        "/Users/dmeck/project/better-chatbot/.claude/agents/worker-eval-frontend.json"
+      ],
+      "status": "active",
+      "created_date": "2025-12-16",
+      "project": "better-chatbot",
+      "purpose": "Implement evaluation detail view page with luxury tech design"
+    }
+  ]
+}

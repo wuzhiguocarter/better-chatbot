@@ -1,0 +1,155 @@
+{
+  "team_name": "eval-detail-implementation",
+  "team_description": "Team responsible for implementing the evaluation detail view page with luxury tech-style design",
+  "project_context": {
+    "project_name": "Better Chatbot",
+    "tech_stack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+    "current_evaluation_features": {
+      "existing_apis": [
+        "GET /api/eval - List evaluations with pagination",
+        "POST /api/eval - Create new evaluation",
+        "PATCH /api/eval/[id] - Update evaluation status",
+        "DELETE /api/eval/[id] - Delete evaluation"
+      ],
+      "existing_components": [
+        "eval-page-client.tsx - Main evaluation page client",
+        "eval-card.tsx - Evaluation card component",
+        "eval-main-content.tsx - Main content area",
+        "eval-sidebar.tsx - Sidebar navigation",
+        "create-eval-dialog.tsx - Create evaluation dialog"
+      ],
+      "existing_routes": ["/eval - Main evaluation list page"]
+    }
+  },
+  "design_requirements": {
+    "style": "luxury tech style (奢华科技风)",
+    "color_scheme": {
+      "primary_background": "deep charcoal backgrounds (#1a1a1a, #2d2d2d)",
+      "accent_colors": "amber and gold accents (#f59e0b, #fbbf24, #fcd34d)",
+      "text_colors": "high contrast whites and grays for readability"
+    },
+    "ui_characteristics": [
+      "Modern, sleek design with subtle gradients",
+      "High contrast for excellent readability",
+      "Premium feel with attention to detail",
+      "Consistent spacing and typography",
+      "Smooth transitions and hover effects"
+    ]
+  },
+  "implementation_tasks": [
+    {
+      "task_id": "api-route-enhancement",
+      "title": "API Route for Evaluation Details",
+      "description": "Enhance existing /api/eval/[id] route to return detailed evaluation data including results, metrics, and execution details",
+      "priority": "high",
+      "dependencies": []
+    },
+    {
+      "task_id": "dynamic-route-page",
+      "title": "Dynamic Route Page with Authentication",
+      "description": "Create /eval/[id] page route with proper authentication and server-side rendering",
+      "priority": "high",
+      "dependencies": ["api-route-enhancement"]
+    },
+    {
+      "task_id": "main-detail-component",
+      "title": "Main Detail Page Component",
+      "description": "Create the main evaluation detail component with data fetching, state management, and luxury tech styling",
+      "priority": "high",
+      "dependencies": ["dynamic-route-page"]
+    },
+    {
+      "task_id": "header-component",
+      "title": "Evaluation Detail Header",
+      "description": "Create header component with evaluation title, status, actions, and breadcrumb navigation",
+      "priority": "medium",
+      "dependencies": ["main-detail-component"]
+    },
+    {
+      "task_id": "info-cards-component",
+      "title": "Information Cards Component",
+      "description": "Create info cards displaying evaluation metadata, dates, configuration, and statistics",
+      "priority": "medium",
+      "dependencies": ["main-detail-component"]
+    },
+    {
+      "task_id": "results-table-component",
+      "title": "Results Table Component",
+      "description": "Create detailed results table with evaluation data, metrics, and interactive features",
+      "priority": "medium",
+      "dependencies": ["main-detail-component"]
+    },
+    {
+      "task_id": "navigation-integration",
+      "title": "Navigation Integration",
+      "description": "Integrate detail page with existing navigation and routing system",
+      "priority": "low",
+      "dependencies": ["dynamic-route-page"]
+    }
+  ],
+  "team_structure": {
+    "team_lead": "Claude Sonnet 4.5",
+    "members": [
+      {
+        "name": "Worker Agent 1",
+        "type": "worker",
+        "specialization": "Backend API & Data Layer",
+        "assigned_tasks": ["api-route-enhancement"]
+      },
+      {
+        "name": "Worker Agent 2",
+        "type": "worker",
+        "specialization": "Frontend Components & UI",
+        "assigned_tasks": [
+          "dynamic-route-page",
+          "main-detail-component",
+          "header-component",
+          "info-cards-component",
+          "results-table-component",
+          "navigation-integration"
+        ]
+      }
+    ]
+  },
+  "development_guidelines": {
+    "code_style": {
+      "typescript": "Strict TypeScript with proper typing",
+      "components": "Functional components with hooks",
+      "styling": "Tailwind CSS with custom theme colors",
+      "error_handling": "Comprehensive error boundaries and validation"
+    },
+    "file_organization": {
+      "api_routes": "src/app/api/eval/[id]/",
+      "page_routes": "src/app/(chat)/eval/[id]/",
+      "components": "src/components/eval/detail/",
+      "types": "src/types/eval/",
+      "utils": "src/lib/eval/"
+    },
+    "testing_requirements": {
+      "unit_tests": "Jest/Vitest for components and utilities",
+      "integration_tests": "API endpoint testing",
+      "e2e_tests": "Playwright for user flows"
+    }
+  },
+  "success_criteria": {
+    "functional": [
+      "Users can view detailed evaluation information",
+      "Proper authentication and authorization",
+      "Responsive design works on all devices",
+      "Real-time status updates where applicable",
+      "Smooth navigation between list and detail views"
+    ],
+    "design": [
+      "Consistent luxury tech styling throughout",
+      "High accessibility and readability standards",
+      "Smooth animations and transitions",
+      "Professional, polished appearance"
+    ],
+    "performance": [
+      "Fast initial page load",
+      "Optimized data fetching and caching",
+      "Minimal bundle size impact",
+      "Smooth scrolling and interactions"
+    ]
+  }
+}

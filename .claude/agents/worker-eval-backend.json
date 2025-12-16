@@ -1,0 +1,79 @@
+{
+  "agent_name": "Worker Agent 1 - Backend Specialist",
+  "agent_type": "worker",
+  "team": "eval-detail-implementation",
+  "specialization": "Backend API & Data Layer",
+  "skills": [
+    "Next.js API Routes",
+    "TypeScript",
+    "Database Integration",
+    "Data Modeling",
+    "Authentication & Authorization",
+    "Error Handling",
+    "API Design"
+  ],
+  "assigned_tasks": ["api-route-enhancement"],
+  "context": {
+    "project_directory": "/Users/dmeck/project/better-chatbot",
+    "existing_api_structure": {
+      "base_route": "/api/eval",
+      "detail_route": "/api/eval/[id]",
+      "current_methods": ["PATCH", "DELETE"],
+      "missing_methods": ["GET"]
+    },
+    "authentication_method": "getSession() from lib/auth/server",
+    "response_format": "NextResponse.json() with proper error handling"
+  },
+  "task_details": {
+    "api-route-enhancement": {
+      "description": "Enhance /api/eval/[id] route to return detailed evaluation data",
+      "requirements": [
+        "Implement GET method to fetch detailed evaluation information",
+        "Return comprehensive evaluation data including metadata, results, and metrics",
+        "Include error handling for invalid evaluation IDs",
+        "Mock realistic data structure for demonstration",
+        "Maintain existing PATCH and DELETE functionality"
+      ],
+      "data_structure": {
+        "evaluation": {
+          "id": "string",
+          "title": "string",
+          "description": "string",
+          "status": "pending|running|completed|failed",
+          "date_created": "string",
+          "date_completed": "string|null",
+          "configuration": {
+            "model": "string",
+            "parameters": "object",
+            "dataset_size": "number"
+          },
+          "results": {
+            "total_samples": "number",
+            "success_rate": "number",
+            "accuracy_metrics": "object",
+            "performance_metrics": "object",
+            "detailed_results": "array"
+          },
+          "logs": "array"
+        }
+      }
+    }
+  },
+  "development_guidelines": {
+    "code_style": {
+      "typescript": "Strict typing with interfaces for all data structures",
+      "error_handling": "Comprehensive try-catch with meaningful error messages",
+      "validation": "Input validation for all parameters"
+    },
+    "security": {
+      "authentication": "Always verify session before processing",
+      "authorization": "Ensure user has access to requested evaluation",
+      "sanitization": "Validate and sanitize all inputs"
+    }
+  },
+  "file_locations": {
+    "target_file": "/Users/dmeck/project/better-chatbot/src/app/api/eval/[id]/route.ts",
+    "types_directory": "/Users/dmeck/project/better-chatbot/src/types/eval/",
+    "utils_directory": "/Users/dmeck/project/better-chatbot/src/lib/eval/"
+  }
+}

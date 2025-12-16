@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SearchIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
 import { EvalCard } from "./eval-card";
 import { EvalPagination } from "./eval-pagination";
@@ -34,6 +35,7 @@ export function EvalMainContent({
   onDeleteFile,
   onRefresh,
 }: EvalMainContentProps) {
+  const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -115,8 +117,8 @@ export function EvalMainContent({
                 key={file.id}
                 file={file}
                 onView={(id) => {
-                  // Handle view action
-                  console.log("View file:", id);
+                  // Navigate to evaluation detail page
+                  router.push(`/eval/${id}`);
                 }}
                 onAction={onFileAction}
                 onDelete={onDeleteFile}
