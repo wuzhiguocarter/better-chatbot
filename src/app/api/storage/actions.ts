@@ -11,7 +11,9 @@ export async function getStorageInfoAction() {
   return {
     type: storageDriver,
     supportsDirectUpload:
-      storageDriver === "vercel-blob" || storageDriver === "s3",
+      storageDriver === "vercel-blob" ||
+      storageDriver === "s3" ||
+      storageDriver === "minio",
   };
 }
 
@@ -74,15 +76,39 @@ export async function checkStorageAction(): Promise<StorageCheckResult> {
     return { isValid: true };
   }
 
-  // 3. Validate storage driver
-  if (!["vercel-blob", "s3"].includes(storageDriver)) {
+  // 3. Check MINIO configuration
+  if (storageDriver === "minio") {
+    // MINIO has sensible defaults, so minimal validation needed
+    // Only validate if they want to use custom credentials without proper setup
+    if (process.env.MINIO_USER && !process.env.MINIO_PASSWORD) {
+      return {
+        isValid: false,
+        error: "MINIO_USER is set but MINIO_PASSWORD is missing",
+        solution:
+          "Complete your MINIO configuration:\n" +
+          "- MINIO_ENDPOINT=http://localhost:9000 (optional, default: http://localhost:9000)\n" +
+          "- MINIO_USER=minioadmin (optional, default: minioadmin)\n" +
+          "- MINIO_PASSWORD=minioadmin (optional, default: minioadmin)\n" +
+          "- MINIO_REGION=us-east-1 (optional, default: us-east-1)\n" +
+          "- MINIO_USE_SSL=false (optional, default: false)\n" +
+          "- MINIO_BUCKET=uploads (optional, uses FILE_STORAGE_PREFIX)\n\n" +
+          "For local development, you can use the defaults without setting any env vars.",
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  // 4. Validate storage driver
+  if (!["vercel-blob", "s3", "minio"].includes(storageDriver)) {
     return {
       isValid: false,
       error: `Invalid storage driver: ${storageDriver}`,
       solution:
         "FILE_STORAGE_TYPE must be one of:\n" +
         "- 'vercel-blob' (default)\n" +
-        "- 's3' (coming soon)",
+        "- 's3'\n" +
+        "- 'minio'",
     };
   }
 
