@@ -42,7 +42,7 @@ beforeEach(() => {
   delete process.env.MINIO_REGION;
   delete process.env.MINIO_USE_SSL;
   delete process.env.MINIO_BUCKET;
-  delete process.env.MINIO_CONSOLE_PORT;
+  delete process.env.MINIO_CONSOLE_ENDPOINT;
 });
 
 describe("createMinioFileStorage", () => {

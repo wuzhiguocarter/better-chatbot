@@ -91,7 +91,8 @@ export async function checkStorageAction(): Promise<StorageCheckResult> {
           "- MINIO_PASSWORD=minioadmin (optional, default: minioadmin)\n" +
           "- MINIO_REGION=us-east-1 (optional, default: us-east-1)\n" +
           "- MINIO_USE_SSL=false (optional, default: false)\n" +
-          "- MINIO_BUCKET=uploads (optional, uses FILE_STORAGE_PREFIX)\n\n" +
+          "- MINIO_BUCKET=uploads (optional, uses FILE_STORAGE_PREFIX)\n" +
+          "- MINIO_CONSOLE_ENDPOINT=http://localhost:9001 (optional, default: http://localhost:9001)\n\n" +
           "For local development, you can use the defaults without setting any env vars.",
       };
     }

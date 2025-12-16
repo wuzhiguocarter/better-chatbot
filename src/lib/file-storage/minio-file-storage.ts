@@ -15,6 +15,7 @@ import {
 import { FileNotFoundError } from "lib/errors";
 import { generateUUID } from "lib/utils";
 import logger from "logger";
+import { s } from "ts-safe";
 
 const STORAGE_PREFIX = resolveStoragePrefix();
 
@@ -50,9 +51,10 @@ const buildPublicUrl = (
   key: string,
   useSSL: boolean,
 ): string => {
+  // http://192.168.1.7:9001/api/v1/buckets/uploads/objects/download?preview=true&prefix=uploads/55c8e659-4535-434c-9010-8e96ef0e8791-004.txt&version_id=null
   const protocol = useSSL ? "https" : "http";
   const baseUrl = endpoint.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  return `${protocol}://${baseUrl}/${bucket}/${encodeURIComponent(key)}`;
+  return `${protocol}://${baseUrl}/api/v1/buckets/${bucket}/objects/download?preview=true&prefix=${key}&version_id=null`;
 };
 
 // Retry helper
@@ -209,14 +211,36 @@ export const createMinioFileStorage = (): FileStorage => {
         uploadedAt: new Date(),
       };
 
+      const downloadUrl = await (async () => {
+        try {
+          const url = await retryOperation(
+            () => client.presignedGetObject(bucket, key, 3600), // 1 hour expiry
+          );
+          return url;
+        } catch (error) {
+          logger.error("Failed to create presigned download URL", {
+            bucket,
+            key,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+      })();
+
+      // Use buildPublicUrl as fallback if getDownloadUrl fails
       const useSSL = getEnvBoolean("MINIO_USE_SSL", DEFAULT_USE_SSL);
-      const endpoint = getEnvWithDefault("MINIO_ENDPOINT", DEFAULT_ENDPOINT);
-      const sourceUrl = buildPublicUrl(endpoint, bucket, key, useSSL);
+      const endpoint = getEnvWithDefault(
+        "MINIO_CONSOLE_ENDPOINT",
+        DEFAULT_ENDPOINT,
+      );
+      const sourceUrl =
+        downloadUrl || buildPublicUrl(endpoint, bucket, key, useSSL);
 
       logger.info("File uploaded to MINIO", {
         bucket,
         key,
         size: buffer.byteLength,
+        sourceUrl: sourceUrl,
         contentType: options.contentType,
       });
 
@@ -328,7 +352,7 @@ export const createMinioFileStorage = (): FileStorage => {
         return {
           key,
           filename: key.split("/").pop() || key,
-          contentType: stat.contentType || "application/octet-stream",
+          contentType: (stat as any).contentType || "application/octet-stream",
           size: stat.size || 0,
           uploadedAt: stat.lastModified,
         } satisfies FileMetadata;
@@ -350,7 +374,10 @@ export const createMinioFileStorage = (): FileStorage => {
 
     async getSourceUrl(key) {
       const useSSL = getEnvBoolean("MINIO_USE_SSL", DEFAULT_USE_SSL);
-      const endpoint = getEnvWithDefault("MINIO_ENDPOINT", DEFAULT_ENDPOINT);
+      const endpoint = getEnvWithDefault(
+        "MINIO_CONSOLE_ENDPOINT",
+        DEFAULT_ENDPOINT,
+      );
       return buildPublicUrl(endpoint, bucket, key, useSSL);
     },
 

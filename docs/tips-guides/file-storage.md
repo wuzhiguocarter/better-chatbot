@@ -10,10 +10,11 @@ Files are stored with **public access** by default, making them accessible via U
 
 ## Storage Drivers
 
-The project supports two storage backends:
+The project supports three storage backends:
 
 - **Vercel Blob** - Default for all deployments (recommended)
-- **S3** - Planned for AWS/S3-compatible storage
+- **S3** - For AWS/S3-compatible storage
+- **MinIO** - For self-hosted S3-compatible storage
 
 **Vercel Blob** is the default storage driver and works seamlessly in both local development and production environments.
 
@@ -23,7 +24,7 @@ The project supports two storage backends:
 
 ```ini
 # Storage driver selection (defaults to vercel-blob)
-FILE_STORAGE_TYPE=vercel-blob # or s3 (coming soon)
+FILE_STORAGE_TYPE=vercel-blob # or s3, minio
 
 # Optional: Subdirectory prefix for organizing files
 FILE_STORAGE_PREFIX=uploads
@@ -32,11 +33,23 @@ FILE_STORAGE_PREFIX=uploads
 BLOB_READ_WRITE_TOKEN=<auto on Vercel>
 VERCEL_BLOB_CALLBACK_URL= # Optional: For local webhook testing with ngrok
 
-# === S3 (FILE_STORAGE_TYPE=s3, not yet implemented) ===
-# FILE_STORAGE_S3_BUCKET=
-# FILE_STORAGE_S3_REGION=
-# AWS_ACCESS_KEY_ID=
-# AWS_SECRET_ACCESS_KEY=
+# === S3 (FILE_STORAGE_TYPE=s3) ===
+FILE_STORAGE_S3_BUCKET=your-bucket
+FILE_STORAGE_S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+# Optional: FILE_STORAGE_S3_PUBLIC_BASE_URL=https://cdn.example.com
+# Optional: FILE_STORAGE_S3_ENDPOINT=https://s3.amazonaws.com
+# Optional: FILE_STORAGE_S3_FORCE_PATH_STYLE=1
+
+# === MinIO (FILE_STORAGE_TYPE=minio) ===
+MINIO_ENDPOINT=http://localhost:9000
+MINIO_USER=minioadmin
+MINIO_PASSWORD=minioadmin
+MINIO_REGION=us-east-1
+MINIO_USE_SSL=false
+MINIO_BUCKET=uploads
+MINIO_CONSOLE_ENDPOINT=http://192.168.1.7:9001
 ```
 
 ### Quick Start with Vercel Blob
@@ -178,7 +191,7 @@ Without ngrok, uploads will work but `onUploadCompleted` won't be called locally
 
 ### Custom Storage Backend
 
-To implement a custom storage driver (e.g., Cloudflare R2, MinIO, S3):
+To implement a custom storage driver (e.g., Cloudflare R2):
 
 1. Create a new file in `src/lib/file-storage/` (e.g., `r2-file-storage.ts`)
 2. Implement the `FileStorage` interface from `file-storage.interface.ts`
@@ -193,14 +206,14 @@ The `FileStorage` interface provides:
 
 ### Storage Comparison
 
-| Feature              | Vercel Blob         | S3 (Planned)       |
-| -------------------- | ------------------- | ------------------ |
-| Direct Client Upload | ✅ Yes              | ✅ Yes (presigned) |
-| CDN                  | ✅ Global           | Configurable       |
-| Cost                 | Pay-as-you-go       | Pay-as-you-go      |
-| Best For             | All deployments     | AWS ecosystem      |
-| Setup Complexity     | Minimal             | Moderate           |
-| Local Development    | ✅ Works with token | ✅ Works           |
+| Feature              | Vercel Blob         | S3                 | MinIO              |
+| -------------------- | ------------------- | ------------------ | ------------------ |
+| Direct Client Upload | ✅ Yes              | ✅ Yes (presigned) | ✅ Yes (presigned) |
+| CDN                  | ✅ Global           | Configurable       | Self-hosted        |
+| Cost                 | Pay-as-you-go       | Pay-as-you-go      | Free (self-hosted) |
+| Best For             | All deployments     | AWS ecosystem      | Self-hosted/Dev    |
+| Setup Complexity     | Minimal             | Moderate           | Low                |
+| Local Development    | ✅ Works with token | ✅ Works           | ✅ Works           |
 
 ## Why Not Local Filesystem?
 
