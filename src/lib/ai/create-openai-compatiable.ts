@@ -15,9 +15,16 @@ export function createOpenAICompatibleModels(
 ) {
   const providers: Record<string, Record<string, LanguageModel>> = {};
   const unsupportedModels = new Set<LanguageModel>();
+  const fileSupportedModels = new Map<LanguageModel, readonly string[]>();
+  const imageInputUnsupportedModels = new Set<LanguageModel>();
 
   if (!config?.length) {
-    return { providers, unsupportedModels };
+    return {
+      providers,
+      unsupportedModels,
+      fileSupportedModels,
+      imageInputUnsupportedModels,
+    };
   }
   try {
     config.forEach(({ provider, models, baseUrl, apiKey }) => {
@@ -39,7 +46,14 @@ export function createOpenAICompatibleModels(
         });
 
         models.forEach(
-          ({ apiName, uiName, supportsTools, apiVersion: modelApiVersion }) => {
+          ({
+            apiName,
+            uiName,
+            supportsTools,
+            apiVersion: modelApiVersion,
+            isImageInputUnsupported,
+            supportedFileMimeTypes,
+          }) => {
             if (!modelApiVersion) {
               throw new Error(
                 `API version is required for Azure OpenAI model: ${uiName}`,
@@ -51,25 +65,56 @@ export function createOpenAICompatibleModels(
             if (!supportsTools) {
               unsupportedModels.add(model);
             }
+
+            if (isImageInputUnsupported) {
+              imageInputUnsupportedModels.add(model);
+            }
+
+            // Register file support if specified
+            if (supportedFileMimeTypes && supportedFileMimeTypes.length > 0) {
+              fileSupportedModels.set(model, supportedFileMimeTypes);
+            }
           },
         );
       } else {
         // Standard OpenAI-compatible providers (original implementation)
-        models.forEach(({ apiName, uiName, supportsTools }) => {
-          const model = customProvider(apiName);
-          providers[providerKey][uiName] = model;
+        models.forEach(
+          ({
+            apiName,
+            uiName,
+            supportsTools,
+            isImageInputUnsupported,
+            supportedFileMimeTypes,
+          }) => {
+            const model = customProvider(apiName);
+            providers[providerKey][uiName] = model;
 
-          if (!supportsTools) {
-            unsupportedModels.add(model);
-          }
-        });
+            if (!supportsTools) {
+              unsupportedModels.add(model);
+            }
+
+            if (isImageInputUnsupported) {
+              imageInputUnsupportedModels.add(model);
+            }
+
+            // Register file support if specified
+            if (supportedFileMimeTypes && supportedFileMimeTypes.length > 0) {
+              fileSupportedModels.set(model, supportedFileMimeTypes);
+            }
+          },
+        );
       }
     });
   } catch (error) {
     console.error("Failed to load or parse dynamic models:", error);
   }
 
-  return { providers, unsupportedModels };
+  return {
+    providers,
+    unsupportedModels,
+    fileSupportedModels,
+    imageInputUnsupportedModels,
+  };
 }
 
 // Define the schema for a single AI model that is compatible with OpenAI's API structure.
@@ -87,6 +132,21 @@ const OpenAICompatibleModelSchema = z.object({
     .optional()
     .describe(
       "For Azure OpenAI, the API version for this specific model. Required for Azure OpenAI models.",
+    ),
+  // File upload support configuration
+  isImageInputUnsupported: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Whether the model does not support image input. Set to true to disable image uploads.",
+    ),
+  supportedFileMimeTypes: z
+    .array(z.string())
+    .optional()
+    .default([])
+    .describe(
+      "List of MIME types supported by this model for file upload. Empty array means no file support.",
     ),
 });
 

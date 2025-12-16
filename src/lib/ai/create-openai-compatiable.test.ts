@@ -37,11 +37,15 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "test-model-1",
             uiName: "Test Model 1",
             supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
           },
           {
             apiName: "test-model-2",
             uiName: "Test Model 2",
             supportsTools: false,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: [],
           },
         ],
       },
@@ -66,6 +70,8 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "model-1",
             uiName: "Model 1",
             supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
           },
         ],
       },
@@ -78,6 +84,8 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "model-2",
             uiName: "Model 2",
             supportsTools: false,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: [],
           },
         ],
       },
@@ -103,16 +111,22 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "supported-model",
             uiName: "Supported Model",
             supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
           },
           {
             apiName: "unsupported-model-1",
             uiName: "Unsupported Model 1",
             supportsTools: false,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: [],
           },
           {
             apiName: "unsupported-model-2",
             uiName: "Unsupported Model 2",
             supportsTools: false,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: [],
           },
         ],
       },
@@ -141,12 +155,16 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "gpt-4o",
             uiName: "GPT-4o (Azure)",
             supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
             apiVersion: "2025-01-01-preview",
           },
           {
             apiName: "gpt-35-turbo",
             uiName: "GPT-3.5 Turbo (Azure)",
             supportsTools: true, // Changed to true to avoid unsupported models
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
             apiVersion: "2024-02-01",
           },
         ],
@@ -174,6 +192,8 @@ describe("createOpenAICompatibleModels", () => {
             apiName: "gpt-4",
             uiName: "GPT-4",
             supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
             // No apiVersion - should still work
           },
         ],
@@ -185,5 +205,153 @@ describe("createOpenAICompatibleModels", () => {
     expect(result.providers).toHaveProperty("OpenAI");
     expect(result.providers["OpenAI"]).toHaveProperty("GPT-4");
     expect(result.unsupportedModels.size).toBe(0);
+  });
+
+  it("should return empty fileSupportedModels and imageInputUnsupportedModels when config is empty", () => {
+    const result = createOpenAICompatibleModels([]);
+
+    expect(result.fileSupportedModels).toBeDefined();
+    expect(result.fileSupportedModels.size).toBe(0);
+    expect(result.imageInputUnsupportedModels).toBeDefined();
+    expect(result.imageInputUnsupportedModels.size).toBe(0);
+  });
+
+  it("should register file support for models with supportedFileMimeTypes", () => {
+    const mockConfig: OpenAICompatibleProvider[] = [
+      {
+        provider: "test-provider",
+        apiKey: "TEST_API_KEY",
+        baseUrl: "https://api.test.com/v1",
+        models: [
+          {
+            apiName: "vision-model",
+            uiName: "Vision Model",
+            supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [
+              "image/jpeg",
+              "image/png",
+              "application/pdf",
+            ],
+          },
+          {
+            apiName: "text-model",
+            uiName: "Text Only Model",
+            supportsTools: true,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: [],
+          },
+        ],
+      },
+    ];
+
+    const result = createOpenAICompatibleModels(mockConfig);
+
+    expect(result.fileSupportedModels.size).toBe(1);
+
+    // Get the vision model and check its file support
+    const visionModel = result.providers["test-provider"]["Vision Model"];
+    const supportedMimeTypes = result.fileSupportedModels.get(visionModel);
+    expect(supportedMimeTypes).toEqual([
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+    ]);
+
+    // Text model should not be in fileSupportedModels (empty array)
+    const textModel = result.providers["test-provider"]["Text Only Model"];
+    expect(result.fileSupportedModels.has(textModel)).toBe(false);
+  });
+
+  it("should handle file support for Azure OpenAI models", () => {
+    const mockConfig: OpenAICompatibleProvider[] = [
+      {
+        provider: "Azure OpenAI",
+        apiKey: "azure-key",
+        baseUrl: "https://test.openai.azure.com/openai/deployments/",
+        models: [
+          {
+            apiName: "gpt-4-vision",
+            uiName: "GPT-4 Vision (Azure)",
+            supportsTools: true,
+            apiVersion: "2025-01-01-preview",
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+          },
+        ],
+      },
+    ];
+
+    const result = createOpenAICompatibleModels(mockConfig);
+
+    expect(result.fileSupportedModels.size).toBe(1);
+
+    const visionModel =
+      result.providers["Azure OpenAI"]["GPT-4 Vision (Azure)"];
+    const supportedMimeTypes = result.fileSupportedModels.get(visionModel);
+    expect(supportedMimeTypes).toEqual([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ]);
+  });
+
+  it("should track image input unsupported models correctly", () => {
+    const mockConfig: OpenAICompatibleProvider[] = [
+      {
+        provider: "test-provider",
+        apiKey: "TEST_API_KEY",
+        baseUrl: "https://api.test.com/v1",
+        models: [
+          {
+            apiName: "vision-model",
+            uiName: "Vision Model",
+            supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: ["image/jpeg", "image/png"],
+          },
+          {
+            apiName: "text-only-model",
+            uiName: "Text Only Model",
+            supportsTools: true,
+            isImageInputUnsupported: true,
+            supportedFileMimeTypes: ["text/plain"],
+          },
+        ],
+      },
+    ];
+
+    const result = createOpenAICompatibleModels(mockConfig);
+
+    expect(result.imageInputUnsupportedModels.size).toBe(1);
+
+    const textOnlyModel = result.providers["test-provider"]["Text Only Model"];
+    expect(result.imageInputUnsupportedModels.has(textOnlyModel)).toBe(true);
+
+    const visionModel = result.providers["test-provider"]["Vision Model"];
+    expect(result.imageInputUnsupportedModels.has(visionModel)).toBe(false);
+  });
+
+  it("should handle models without file support configuration", () => {
+    const mockConfig: OpenAICompatibleProvider[] = [
+      {
+        provider: "test-provider",
+        apiKey: "TEST_API_KEY",
+        baseUrl: "https://api.test.com/v1",
+        models: [
+          {
+            apiName: "basic-model",
+            uiName: "Basic Model",
+            supportsTools: true,
+            isImageInputUnsupported: false,
+            supportedFileMimeTypes: [],
+          },
+        ],
+      },
+    ];
+
+    const result = createOpenAICompatibleModels(mockConfig);
+
+    expect(result.fileSupportedModels.size).toBe(0);
   });
 });

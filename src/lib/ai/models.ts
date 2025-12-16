@@ -91,13 +91,6 @@ const staticUnsupportedModels = new Set([
   staticModels.openRouter["gemini-2.0-flash-exp:free"],
 ]);
 
-const staticSupportImageInputModels = {
-  ...staticModels.google,
-  ...staticModels.xai,
-  ...staticModels.openai,
-  ...staticModels.anthropic,
-};
-
 const staticFilePartSupportByModel = new Map<
   LanguageModel,
   readonly string[]
@@ -158,6 +151,8 @@ const openaiCompatibleProviders = openaiCompatibleModelsSafeParse(
 const {
   providers: openaiCompatibleModels,
   unsupportedModels: openaiCompatibleUnsupportedModels,
+  fileSupportedModels: openaiCompatibleFileSupportedModels,
+  imageInputUnsupportedModels: openaiCompatibleImageInputUnsupportedModels,
 } = createOpenAICompatibleModels(openaiCompatibleProviders);
 
 const allModels = { ...openaiCompatibleModels, ...staticModels };
@@ -172,11 +167,23 @@ export const isToolCallUnsupportedModel = (model: LanguageModel) => {
 };
 
 const isImageInputUnsupportedModel = (model: LanguageModelV2) => {
-  return !Object.values(staticSupportImageInputModels).includes(model);
+  // First check if the model is explicitly configured to not support image input
+  if (openaiCompatibleImageInputUnsupportedModels.has(model)) {
+    return true;
+  }
+
+  // Then check file MIME types for image support
+  const mimeTypes = getFilePartSupportedMimeTypes(model);
+  const hasImageSupport = mimeTypes.some((mime) => mime.startsWith("image/"));
+  return !hasImageSupport;
 };
 
 export const getFilePartSupportedMimeTypes = (model: LanguageModel) => {
-  return staticFilePartSupportByModel.get(model) ?? [];
+  return (
+    staticFilePartSupportByModel.get(model) ??
+    openaiCompatibleFileSupportedModels.get(model) ??
+    []
+  );
 };
 
 const fallbackModel = staticModels.openai["gpt-4.1"];
