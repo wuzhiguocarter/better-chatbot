@@ -23,6 +23,7 @@ import {
   FolderSearchIcon,
   PlusIcon,
   Waypoints,
+  DatabaseIcon,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Skeleton } from "ui/skeleton";
@@ -96,6 +97,18 @@ export function AppSidebarMenus({ user }: { user?: BasicUser }) {
                 <SidebarMenuButton className="font-semibold">
                   <Waypoints className="size-4" />
                   {t("Layout.workflow")}
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          </Tooltip>
+        </SidebarMenu>
+        <SidebarMenu>
+          <Tooltip>
+            <SidebarMenuItem>
+              <Link href="/eval">
+                <SidebarMenuButton className="font-semibold">
+                  <DatabaseIcon className="size-4" />
+                  评估管理
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>

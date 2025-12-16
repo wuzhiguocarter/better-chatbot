@@ -1,5 +1,65 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* Custom animations for eval module */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Staggered animations for cards */
+.stagger-children > * {
+  animation: fade-in 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stagger-children > *:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stagger-children > *:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stagger-children > *:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.stagger-children > *:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.stagger-children > *:nth-child(6) {
+  animation-delay: 0.6s;
+}
+
+.stagger-children > *:nth-child(7) {
+  animation-delay: 0.7s;
+}
+
+.stagger-children > *:nth-child(8) {
+  animation-delay: 0.8s;
+}
+
+.stagger-children > *:nth-child(9) {
+  animation-delay: 0.9s;
+}
+
 /* Individual theme variants - themes from  https://github.com/rawestmoreland/theme-generator/blob/main/src/app/globals.css */
 
 @theme inline {
@@ -77,6 +137,7 @@
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
 }
+
 .light {
   [data-theme="zinc"] {
     --background: hsl(0 0% 100%);
@@ -1438,6 +1499,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -1459,10 +1521,12 @@
     padding: 0.2rem 0.6rem;
     margin: 0 0.1rem;
   }
+
   .duration-3000 {
     --tw-duration: 3000ms;
     transition-duration: var(--tw-duration);
   }
+
   .duration-5000 {
     --tw-duration: 5000ms;
     transition-duration: var(--tw-duration);
@@ -1477,9 +1541,11 @@
     0% {
       opacity: 0;
     }
+
     80% {
       opacity: 0;
     }
+
     100% {
       opacity: 1;
     }
@@ -1490,9 +1556,11 @@
     100% {
       transform: rotate(0deg);
     }
+
     25% {
       transform: rotate(-8deg);
     }
+
     75% {
       transform: rotate(8deg);
     }
@@ -1503,10 +1571,11 @@
   }
 
   .react-flow__node-default {
-    @apply bg-transparent! text-foreground! p-0! border-none! text-sm! text-left! shadow-none!;
+    @apply bg-transparent text-foreground p-0 border-none text-sm text-left shadow-none;
   }
+
   .react-flow__panel.react-flow__attribution.bottom.right {
-    @apply hidden!;
+    @apply hidden;
   }
 
   .fade-300 {
