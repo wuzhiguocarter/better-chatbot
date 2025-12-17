@@ -5,16 +5,3 @@ export interface EvalFile {
   date: string;
   description?: string;
 }
-
-export interface EvalPagination {
-  currentPage: number;
-  totalPages: number;
-  totalFiles: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
-
-export interface EvalResponse {
-  files: EvalFile[];
-  pagination: EvalPagination;
-}
