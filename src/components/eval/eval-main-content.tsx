@@ -67,10 +67,6 @@ export function EvalMainContent({
             <PlusIcon className="w-5 h-5 mr-2" />
             {t("createNew")}
           </Button>
-          <Button variant="ghost" onClick={() => router.push("/eval-task")}>
-            <PlusIcon className="w-5 h-5 mr-2" />
-            对话测试
-          </Button>
         </div>
 
         {/* Search and Action Area */}
