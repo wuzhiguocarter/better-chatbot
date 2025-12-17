@@ -27,11 +27,3 @@ export interface EvaluationResultItem {
   execution_time: number;
   timestamp: string;
 }
-
-export interface EvaluationCard {
-  id: string;
-  title: string;
-  status: EvaluationDetail["status"];
-  date: string;
-  description: string;
-}

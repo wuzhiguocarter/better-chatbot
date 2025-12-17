@@ -3,7 +3,7 @@ import { getSession } from "lib/auth/server";
 import { evalFileRepository } from "lib/db/repository";
 
 type RouteContext = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 // Transform function to convert mock results to EvaluationResultItem format
@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   // Legacy mock data for transformation
   const legacyResults = [
@@ -140,7 +140,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json();
   const { action } = body;
 
@@ -178,7 +178,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const deleted = await evalFileRepository.softDeleteEvalFile({
