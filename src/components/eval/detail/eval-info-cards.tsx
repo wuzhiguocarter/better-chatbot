@@ -40,11 +40,15 @@ export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
   };
 
   // Calculate total execution time from results array
-  const totalExecutionTime =
-    evaluation.results?.reduce(
-      (total, result) => total + (result.execution_time || 0),
-      0,
-    ) || 0;
+  const resultItems =
+    evaluation.results && "detailed_results" in evaluation.results
+      ? evaluation.results.detailed_results
+      : [];
+
+  const totalExecutionTime = resultItems.reduce(
+    (total, result) => total + (result.executionTime || 0),
+    0,
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -52,8 +56,9 @@ export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
       <EvalMetricCard
         title={t("metrics.datasetSize")}
         value={
-          evaluation.configuration?.dataset_size ||
-          evaluation.results?.length ||
+          evaluation.configuration?.totalRows ||
+          evaluation.results?.total_samples ||
+          resultItems.length ||
           0
         }
         icon="file"
@@ -63,7 +68,7 @@ export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
       {/* Created At */}
       <EvalMetricCard
         title={t("metrics.createdAt")}
-        value={formatDate(evaluation.date_created)}
+        value={formatDate(evaluation.createdAt)}
         icon="clock"
         description={t("metrics.createdAtDescription")}
       />
@@ -71,7 +76,7 @@ export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
       {/* Completed At */}
       <EvalMetricCard
         title={t("metrics.completedAt")}
-        value={formatDate(evaluation.date_completed)}
+        value={formatDate(evaluation.updatedAt)}
         icon="clock"
         description={t("metrics.completedAtDescription")}
       />

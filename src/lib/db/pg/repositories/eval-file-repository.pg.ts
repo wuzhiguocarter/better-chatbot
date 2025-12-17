@@ -66,6 +66,16 @@ export const pgEvalFileRepository: EvalFileRepository = {
     return row as EvalFileEntity;
   },
 
+  async findById(id: string) {
+    const [row] = await db
+      .select()
+      .from(EvalFileTable)
+      .where(and(eq(EvalFileTable.id, id), eq(EvalFileTable.isDeleted, false)))
+      .limit(1);
+
+    return (row ?? null) as EvalFileEntity | null;
+  },
+
   async softDeleteEvalFile({ id, userId }) {
     const [row] = await db
       .update(EvalFileTable)

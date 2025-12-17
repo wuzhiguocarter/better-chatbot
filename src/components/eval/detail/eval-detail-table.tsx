@@ -95,8 +95,8 @@ export function EvalDetailTable({
   const columns: Column[] = [
     { key: "index", label: t("table.number"), type: "number" },
     { key: "input", label: t("table.input"), type: "string" },
-    { key: "actual_output", label: t("table.output"), type: "string" },
-    { key: "execution_time", label: t("table.executionTime"), type: "number" },
+    { key: "actualOutput", label: t("table.output"), type: "string" },
+    { key: "executionTime", label: t("table.executionTime"), type: "number" },
     { key: "success", label: t("table.status"), type: "boolean" },
     { key: "actions", label: t("table.actions"), type: "string" },
   ];
@@ -558,7 +558,7 @@ export function EvalDetailTable({
                               {t("table.viewProcess")}
                             </Button>
                           ) : column.key === "input" ||
-                            column.key === "output" ? (
+                            column.key === "actualOutput" ? (
                             <div className="max-w-md">
                               <p className="text-zinc-200 text-sm line-clamp-2">
                                 {searchTerm && searchable
@@ -589,7 +589,7 @@ export function EvalDetailTable({
                                 </div>
                               )}
                             </div>
-                          ) : column.key === "execution_time" ? (
+                          ) : column.key === "executionTime" ? (
                             <div className="flex items-center justify-end gap-1">
                               <span className="text-primary font-mono font-semibold">
                                 {formatCellValue(row[column.key], column.type)}

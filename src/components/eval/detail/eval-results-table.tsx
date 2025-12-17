@@ -105,7 +105,7 @@ export function EvalResultsTable({ results }: EvalResultsTableProps) {
                   <TableCell className="py-4 px-6">
                     <div className="max-w-md">
                       <p className="text-zinc-300 text-xs line-clamp-2">
-                        {result.actual_output}
+                        {result.actualOutput}
                       </p>
                     </div>
                   </TableCell>
@@ -113,7 +113,7 @@ export function EvalResultsTable({ results }: EvalResultsTableProps) {
                   <TableCell className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span className="text-amber-300 font-mono font-semibold">
-                        {result.execution_time}
+                        {result.executionTime}
                       </span>
                       <span className="text-amber-400/60 text-xs">ms</span>
                     </div>
