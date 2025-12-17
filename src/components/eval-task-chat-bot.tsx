@@ -3,6 +3,7 @@
 import { appStore } from "@/app/store";
 import PromptInput from "@/components/prompt-input";
 import { useEvalTaskGenerateThreadTitle } from "@/hooks/queries/use-generate-eval-task-thread-title";
+import { useEvalTaskThreadList } from "@/hooks/queries/use-eval-task-thread-list";
 import { useToRef } from "@/hooks/use-latest";
 import { useChat } from "@ai-sdk/react";
 import {
@@ -26,21 +27,42 @@ import { mutate } from "swr";
 type Props = {
   threadId: string;
   initialMessages: UIMessage[];
+  model?: ChatModel;
+  toolChoice?: any;
+  allowedAppDefaultToolkit?: string[];
+  allowedMcpServers?: Record<string, any>;
+  threadList?: any[];
+  threadMentions?: Record<string, any[]>;
+  threadImageToolModel?: Record<string, any>;
 };
 
-export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
+export function EvalTaskChatBot({
+  threadId,
+  initialMessages,
+  model,
+  toolChoice,
+  allowedAppDefaultToolkit,
+  allowedMcpServers,
+  threadList,
+  threadMentions,
+  threadImageToolModel,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
+  // 主动获取评估任务线程列表
+  useEvalTaskThreadList();
+
+  // Get values from app store as fallback if not provided as props
   const [
-    appStoreMutate,
-    model,
-    toolChoice,
-    allowedAppDefaultToolkit,
-    allowedMcpServers,
-    threadList,
-    threadMentions,
-    threadImageToolModel,
+    _appStoreMutate,
+    appStoreModel,
+    appStoreToolChoice,
+    appStoreAllowedAppDefaultToolkit,
+    appStoreAllowedMcpServers,
+    appStoreThreadList,
+    appStoreThreadMentions,
+    appStoreThreadImageToolModel,
   ] = appStore(
     useShallow((state) => [
       state.mutate,
@@ -54,20 +76,31 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
     ]),
   );
 
+  // Use props if provided, otherwise use app store values
+  const finalModel = model ?? appStoreModel;
+  const finalToolChoice = toolChoice ?? appStoreToolChoice;
+  const finalAllowedAppDefaultToolkit =
+    allowedAppDefaultToolkit ?? appStoreAllowedAppDefaultToolkit;
+  const finalAllowedMcpServers = allowedMcpServers ?? appStoreAllowedMcpServers;
+  const finalThreadList = threadList ?? appStoreThreadList;
+  const finalThreadMentions = threadMentions ?? appStoreThreadMentions;
+  const finalThreadImageToolModel =
+    threadImageToolModel ?? appStoreThreadImageToolModel;
+
   const generateTitle = useEvalTaskGenerateThreadTitle({
     threadId,
   });
 
-  const mentions = threadMentions[threadId] ?? [];
+  const mentions = finalThreadMentions[threadId] ?? [];
 
   const latestRef = useToRef({
-    model,
-    toolChoice,
-    allowedAppDefaultToolkit,
-    allowedMcpServers,
+    model: finalModel,
+    toolChoice: finalToolChoice,
+    allowedAppDefaultToolkit: finalAllowedAppDefaultToolkit,
+    allowedMcpServers: finalAllowedMcpServers,
     mentions,
-    threadImageToolModel,
-    threadList,
+    threadImageToolModel: finalThreadImageToolModel,
+    threadList: finalThreadList,
     messages: initialMessages,
   });
 
@@ -109,16 +142,9 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
     error,
     sendMessage,
     stop,
-  } = useChat<UIMessage>({
+  } = useChat({
     id: threadId,
-    api: "/api/eval/task_chat",
-    initialMessages,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-    experimental_throttleFast: true,
-    streamMode: "text",
-    sendExtraMessageFields: true,
-    generateId: generateUUID,
-    onFinish,
     transport: new DefaultChatTransport({
       api: "/api/eval/task_chat",
       prepareSendMessagesRequest: ({ messages, body, id }) => {
@@ -159,8 +185,8 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
         );
 
         const requestBody: ChatApiSchemaRequestBody = {
-          ...(body as { model?: ChatModel }),
-          id: id ?? threadId,
+          ...body,
+          id,
           chatModel:
             (body as { model: ChatModel })?.model ?? latestRef.current.model,
           toolChoice: latestRef.current.toolChoice,
@@ -178,10 +204,13 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
           },
           attachments,
         };
-
         return { body: requestBody };
       },
     }),
+    messages: initialMessages,
+    generateId: generateUUID,
+    experimental_throttle: 100,
+    onFinish,
     onError(err) {
       toast.error(err.message);
       setMessages((prev) => prev.slice(0, -1));
@@ -204,13 +233,6 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
     () => status === "streaming" || status === "submitted",
     [status],
   );
-
-  useEffect(() => {
-    appStoreMutate({ currentThreadId: threadId });
-    return () => {
-      appStoreMutate({ currentThreadId: null });
-    };
-  }, [threadId, appStoreMutate]);
 
   useEffect(() => {
     const container = containerRef.current;
