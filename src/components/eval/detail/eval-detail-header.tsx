@@ -1,6 +1,7 @@
 import { Button } from "ui/button";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "lib/utils";
 
 interface EvalDetailHeaderProps {
@@ -15,6 +16,7 @@ export function EvalDetailHeader({
   date,
 }: EvalDetailHeaderProps) {
   const router = useRouter();
+  const t = useTranslations("Eval");
 
   const handleBack = () => {
     router.push("/eval");
@@ -25,19 +27,19 @@ export function EvalDetailHeader({
 
     const statusConfig = {
       pending: {
-        text: "未启动",
+        text: t("status.pending"),
         className: "bg-secondary text-secondary-foreground",
       },
       running: {
-        text: "运行中",
+        text: t("status.running"),
         className: "bg-chart-2 text-chart-2-foreground",
       },
       completed: {
-        text: "已完成",
+        text: t("status.completed"),
         className: "bg-chart-1 text-chart-1-foreground",
       },
       failed: {
-        text: "失败",
+        text: t("status.failed"),
         className: "bg-destructive text-destructive-foreground",
       },
     };
@@ -57,7 +59,7 @@ export function EvalDetailHeader({
 
   return (
     <div className="mb-8">
-      {/* 面包屑导航和返回按钮 */}
+      {/* Breadcrumb navigation and back button */}
       <div className="flex items-center gap-4 mb-4">
         <Button
           variant="ghost"
@@ -69,13 +71,13 @@ export function EvalDetailHeader({
         </Button>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>评估管理</span>
+          <span>{t("title")}</span>
           <span>/</span>
-          <span className="text-foreground">详情</span>
+          <span className="text-foreground">{t("detail.pageTitle")}</span>
         </div>
       </div>
 
-      {/* 页面标题和状态 */}
+      {/* Page title and status */}
       <div className="flex items-center gap-4">
         <h1 className="text-3xl font-bold text-foreground font-serif">
           {title}
@@ -86,7 +88,9 @@ export function EvalDetailHeader({
         <div className="flex-1" />
 
         {date && (
-          <div className="text-sm text-muted-foreground">创建时间: {date}</div>
+          <div className="text-sm text-muted-foreground">
+            {t("detail.createdAt")}: {date}
+          </div>
         )}
       </div>
     </div>

@@ -19,6 +19,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 
 interface EvalCardProps {
   file: EvalFile;
@@ -28,16 +29,20 @@ interface EvalCardProps {
 }
 
 export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
+  const t = useTranslations("Eval");
+
   const getStatusText = () => {
     switch (file.status) {
       case "pending":
-        return "未启动";
+        return t("status.pending");
       case "running":
-        return "运行中";
+        return t("status.running");
       case "completed":
-        return "已完成";
+        return t("status.completed");
+      case "failed":
+        return t("status.failed");
       default:
-        return "未知";
+        return t("status.unknown");
     }
   };
 
@@ -67,7 +72,7 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
     >
       <CardHeader className="shrink gap-y-0">
         <CardTitle className="flex gap-3 items-stretch min-w-0">
-          {/* 文件图标 - 绿色渐变背景 */}
+          {/* File Icon - Green gradient background */}
           <div
             style={{ backgroundColor: "#10b981" }}
             className="p-2 rounded-lg flex items-center justify-center ring ring-background border shrink-0"
@@ -83,7 +88,7 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
               >
                 {file.title}
               </span>
-              {/* 状态徽章 */}
+              {/* Status Badge */}
               <span
                 className={cn(
                   "px-2 rounded-sm text-xs shrink-0",
@@ -104,14 +109,14 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
 
       <CardContent className="min-h-0 grow">
         <CardDescription className="text-xs line-clamp-3 break-words overflow-hidden">
-          {file.description || "暂无描述"}
+          {file.description || t("card.noDescription")}
         </CardDescription>
       </CardContent>
 
       <CardFooter className="shrink min-h-0 overflow-visible">
         <div className="flex items-center justify-between w-full min-w-0">
           <div className="flex items-center gap-2">
-            {/* 查看 */}
+            {/* View */}
             <Button
               variant="ghost"
               size="icon"
@@ -120,11 +125,12 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
                 onView(file.id);
               }}
               className="h-8 w-8"
+              title={t("card.view")}
             >
               <EyeIcon className="h-4 w-4" />
             </Button>
 
-            {/* 开始/停止 */}
+            {/* Start/Stop */}
             {file.status === "pending" || file.status === "completed" ? (
               <Button
                 variant="ghost"
@@ -134,6 +140,7 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
                   onAction(file.id, "start");
                 }}
                 className="h-8 w-8"
+                title={t("card.start")}
               >
                 <PlayIcon className="h-4 w-4" />
               </Button>
@@ -146,12 +153,13 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
                   onAction(file.id, "stop");
                 }}
                 className="h-8 w-8"
+                title={t("card.stop")}
               >
                 <SquareIcon className="h-4 w-4" />
               </Button>
             )}
 
-            {/* 删除 */}
+            {/* Delete */}
             <Button
               variant="ghost"
               size="icon"
@@ -160,6 +168,7 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
                 onDelete(file.id);
               }}
               className="h-8 w-8 text-destructive hover:text-destructive"
+              title={t("card.delete")}
             >
               <TrashIcon className="h-4 w-4" />
             </Button>

@@ -1,0 +1,85 @@
+{
+  "agent_name": "Worker Agent 2 - Frontend Integration Specialist",
+  "agent_type": "worker",
+  "team": "eval-i18n-team",
+  "specialization": "Frontend Integration",
+  "skills": [
+    "React",
+    "TypeScript",
+    "next-intl",
+    "Component internationalization",
+    "Form localization",
+    "UI implementation",
+    "Tailwind CSS"
+  ],
+  "assigned_tasks": [
+    "component-integration",
+    "form-validation-i18n",
+    "language-switcher"
+  ],
+  "prompt": "You are part of a team implementing the evaluation module internationalization. Check your mailbox for task assignments.",
+  "context": {
+    "project_directory": "/Users/dmeck/project/better-chatbot",
+    "components_directory": "/src/components/eval/",
+    "pages_directory": "/src/app/(chat)/eval/",
+    "i18n_config": "/src/i18n.ts",
+    "existing_components": [
+      "eval-page-client.tsx",
+      "eval-card.tsx",
+      "eval-main-content.tsx",
+      "eval-sidebar.tsx",
+      "create-eval-dialog.tsx",
+      "eval-detail-view.tsx"
+    ]
+  },
+  "task_details": {
+    "component-integration": {
+      "description": "Update all evaluation components to use internationalized messages",
+      "requirements": [
+        "Replace hardcoded strings with useTranslations() hooks",
+        "Import and use appropriate message keys",
+        "Maintain existing component functionality",
+        "Ensure proper TypeScript typing for messages",
+        "Test components with different locales"
+      ]
+    },
+    "form-validation-i18n": {
+      "description": "Update form validation messages to support multiple languages",
+      "requirements": [
+        "Localize validation error messages",
+        "Use react-hook-form with i18n integration",
+        "Support dynamic validation messages",
+        "Maintain form accessibility"
+      ]
+    },
+    "language-switcher": {
+      "description": "Create and integrate a language switcher component",
+      "requirements": [
+        "Create LanguageSwitcher component",
+        "Display current language and available options",
+        "Handle locale switching without page reload",
+        "Persist language preference",
+        "Integrate with evaluation pages"
+      ]
+    }
+  },
+  "development_guidelines": {
+    "code_patterns": {
+      "translations_import": "const t = useTranslations('eval')",
+      "message_usage": "t('key.path') for accessing messages",
+      "namespaces": "Use eval namespace for evaluation module messages",
+      "typescript": "Type message keys with inferNextIntlStaticTypes"
+    },
+    "component_updates": {
+      "replacement_strategy": "Replace strings systematically by component",
+      "testing_approach": "Test each component after i18n integration",
+      "accessibility": "Maintain aria-labels and accessibility features"
+    }
+  },
+  "file_locations": {
+    "components": "/Users/dmeck/project/better-chatbot/src/components/eval/",
+    "pages": "/Users/dmeck/project/better-chatbot/src/app/(chat)/eval/",
+    "language_switcher": "/Users/dmeck/project/better-chatbot/src/components/LanguageSwitcher.tsx",
+    "types": "/Users/dmeck/project/better-chatbot/src/types/eval/"
+  }
+}

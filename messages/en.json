@@ -797,5 +797,88 @@
     "publicDescription": "Featured for all users to use",
     "featured": "Featured",
     "featuredDescription": "Featured for all users to use"
+  },
+  "Eval": {
+    "title": "Evaluation Management",
+    "createNew": "New Evaluation",
+    "createNewTask": "Create Evaluation Task",
+    "createTaskDescription": "Create new AI agent evaluation tasks to monitor and optimize service quality",
+    "searchPlaceholder": "Search evaluation files...",
+    "noResults": "No matching evaluation files found",
+    "noFiles": "No evaluation files",
+    "createFirst": "Create the first evaluation now",
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "unknown": "Unknown"
+    },
+    "card": {
+      "noDescription": "No description",
+      "view": "View",
+      "delete": "Delete",
+      "start": "Start",
+      "stop": "Stop"
+    },
+    "createDialog": {
+      "title": "Evaluation Title",
+      "description": "Evaluation Description",
+      "titlePlaceholder": "Please enter evaluation task title...",
+      "descriptionPlaceholder": "Please enter detailed description of the evaluation task...",
+      "requiredIndicator": "*",
+      "success": "Evaluation task created successfully!",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "created": "Created",
+      "createNow": "Create Now"
+    },
+    "detail": {
+      "pageTitle": "Details",
+      "resultsTitle": "Evaluation Results Details",
+      "noResults": "No evaluation results",
+      "loadFailed": "Load Failed",
+      "loadFailedMessage": "Failed to load evaluation details, please try again later",
+      "createdAt": "Created At",
+      "completedAt": "Completed At",
+      "totalExecutionTime": "Total Execution Time",
+      "totalExecutionTimeDescription": "Total time for all test cases",
+      "resultsCount": "Total {count} evaluation results, including input, output, latency and other details"
+    },
+    "table": {
+      "number": "Number",
+      "input": "Input Content",
+      "output": "Output Result",
+      "executionTime": "Execution Time",
+      "totalLatency": "Total Latency (ms)",
+      "status": "Status",
+      "actions": "Actions",
+      "success": "Success",
+      "failed": "Failed",
+      "viewProcess": "View Process",
+      "noResultsFound": "No matching results found",
+      "searchPlaceholder": "Search evaluation results...",
+      "totalRows": "Total rows: {count}"
+    },
+    "metrics": {
+      "datasetSize": "Dataset Size",
+      "datasetSizeDescription": "Number of test cases",
+      "createdAt": "Created At",
+      "createdAtDescription": "Task creation time",
+      "completedAt": "Completed At",
+      "completedAtDescription": "Task completion time",
+      "totalExecutionTime": "Total Execution Time",
+      "totalExecutionTimeDescription": "Total time for all test cases",
+      "notSet": "Not Set"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "loading": {
+      "header": "Header Skeleton",
+      "infoCards": "Info Cards Skeleton",
+      "resultsTable": "Results Table Skeleton"
+    }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { useTranslations } from "next-intl";
 import { fetcher } from "lib/utils";
 import { EvaluationDetail } from "@/types/eval/index";
 import { EvalDetailHeader } from "./eval-detail-header";
@@ -33,7 +34,7 @@ function getResultsData(evaluation: EvaluationDetail) {
   return [];
 }
 
-function getResultsStats(evaluation: EvaluationDetail) {
+function getResultsStats(evaluation: EvaluationDetail, t: any) {
   // Handle new structure
   if (
     evaluation.results &&
@@ -42,7 +43,9 @@ function getResultsStats(evaluation: EvaluationDetail) {
   ) {
     return {
       total: evaluation.results.total_samples,
-      description: `共 ${evaluation.results.total_samples} 条评估结果，包含输入、输出、延迟等详细信息`,
+      description: t("detail.resultsCount", {
+        count: evaluation.results.total_samples,
+      }),
     };
   }
 
@@ -51,19 +54,20 @@ function getResultsStats(evaluation: EvaluationDetail) {
     const resultsArray = evaluation.results as any[];
     return {
       total: resultsArray.length,
-      description: `共 ${resultsArray.length} 条评估结果，包含输入、输出、延迟等详细信息`,
+      description: t("detail.resultsCount", { count: resultsArray.length }),
     };
   }
 
   return {
     total: 0,
-    description: "暂无评估结果",
+    description: t("detail.noResults"),
   };
 }
 
 export function EvalDetailPageClient({
   evaluationId,
 }: EvalDetailPageClientProps) {
+  const t = useTranslations("Eval");
   const { data, error, isLoading } = useSWR<{ evaluation: EvaluationDetail }>(
     `/api/eval/${evaluationId}`,
     fetcher,
@@ -80,12 +84,12 @@ export function EvalDetailPageClient({
     return (
       <main className="flex-1 bg-background min-h-screen text-foreground">
         <div className="w-full flex flex-col gap-4 p-8">
-          <EvalDetailHeader title="加载失败" />
+          <EvalDetailHeader title={t("detail.loadFailed")} />
           <Card className="bg-card border border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 text-destructive-foreground">
                 <AlertCircleIcon className="h-5 w-5" />
-                <span>无法加载评估详情，请稍后重试</span>
+                <span>{t("detail.loadFailedMessage")}</span>
               </div>
             </CardContent>
           </Card>
@@ -98,26 +102,26 @@ export function EvalDetailPageClient({
 
   // Get results data and stats using helper functions
   const resultsData = getResultsData(evaluation);
-  const resultsStats = getResultsStats(evaluation);
+  const resultsStats = getResultsStats(evaluation, t);
 
   return (
     <main className="flex-1 bg-background min-h-screen text-foreground">
       <div className="w-full flex flex-col gap-4 p-8">
-        {/* 页面头部 */}
+        {/* Page Header */}
         <EvalDetailHeader
           title={evaluation.title}
           status={evaluation.status}
           date={evaluation.date_created}
         />
 
-        {/* 基础信息卡片 */}
+        {/* Info Cards */}
         <EvalInfoCards evaluation={evaluation} />
 
-        {/* 结果表格 */}
+        {/* Results Table */}
         {resultsData.length > 0 && (
           <EvalDetailTable
             results={resultsData}
-            title="评估结果详情"
+            title={t("detail.resultsTitle")}
             description={resultsStats.description}
           />
         )}
@@ -130,7 +134,7 @@ function EvalDetailPageSkeleton() {
   return (
     <main className="flex-1 bg-background min-h-screen text-foreground">
       <div className="w-full flex flex-col gap-4 p-8">
-        {/* 头部骨架屏 */}
+        {/* Header Skeleton */}
         <div className="flex items-center gap-4 mb-4">
           <Skeleton className="h-10 w-10 bg-muted rounded" />
           <div className="flex items-center gap-2">
@@ -147,7 +151,7 @@ function EvalDetailPageSkeleton() {
           <Skeleton className="h-4 w-32 bg-muted" />
         </div>
 
-        {/* 信息卡片骨架屏 */}
+        {/* Info Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="bg-card border border-border">
@@ -164,7 +168,7 @@ function EvalDetailPageSkeleton() {
           ))}
         </div>
 
-        {/* 表格骨架屏 */}
+        {/* Table Skeleton */}
         <Card className="bg-card border border-border">
           <CardContent className="p-6">
             <Skeleton className="h-6 w-32 mb-4 bg-muted" />

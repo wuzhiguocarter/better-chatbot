@@ -495,5 +495,88 @@
         "select": "Seleccionar"
       }
     }
+  },
+  "Eval": {
+    "title": "Gestión de Evaluaciones",
+    "createNew": "Nueva Evaluación",
+    "createNewTask": "Crear Tarea de Evaluación",
+    "createTaskDescription": "Crear nuevas tareas de evaluación de agentes de IA para monitorear y optimizar la calidad del servicio",
+    "searchPlaceholder": "Buscar archivos de evaluación...",
+    "noResults": "No se encontraron archivos de evaluación coincidentes",
+    "noFiles": "No hay archivos de evaluación",
+    "createFirst": "Crear la primera evaluación ahora",
+    "status": {
+      "pending": "Pendiente",
+      "running": "En Ejecución",
+      "completed": "Completado",
+      "failed": "Falló",
+      "unknown": "Desconocido"
+    },
+    "card": {
+      "noDescription": "Sin descripción",
+      "view": "Ver",
+      "delete": "Eliminar",
+      "start": "Iniciar",
+      "stop": "Detener"
+    },
+    "createDialog": {
+      "title": "Título de Evaluación",
+      "description": "Descripción de Evaluación",
+      "titlePlaceholder": "Por favor ingresa el título de la tarea de evaluación...",
+      "descriptionPlaceholder": "Por favor ingresa la descripción detallada de la tarea de evaluación...",
+      "requiredIndicator": "*",
+      "success": "¡Tarea de evaluación creada exitosamente!",
+      "cancel": "Cancelar",
+      "creating": "Creando...",
+      "created": "Creado",
+      "createNow": "Crear Ahora"
+    },
+    "detail": {
+      "pageTitle": "Detalles",
+      "resultsTitle": "Detalles de Resultados de Evaluación",
+      "noResults": "No hay resultados de evaluación",
+      "loadFailed": "Error al Cargar",
+      "loadFailedMessage": "Error al cargar detalles de evaluación, por favor intenta más tarde",
+      "createdAt": "Creado En",
+      "completedAt": "Completado En",
+      "totalExecutionTime": "Tiempo Total de Ejecución",
+      "totalExecutionTimeDescription": "Tiempo total para todos los casos de prueba",
+      "resultsCount": "Total {count} resultados de evaluación, incluyendo entrada, salida, latencia y otros detalles"
+    },
+    "table": {
+      "number": "Número",
+      "input": "Contenido de Entrada",
+      "output": "Resultado de Salida",
+      "executionTime": "Tiempo de Ejecución",
+      "totalLatency": "Latencia Total (ms)",
+      "status": "Estado",
+      "actions": "Acciones",
+      "success": "Éxito",
+      "failed": "Falló",
+      "viewProcess": "Ver Proceso",
+      "noResultsFound": "No se encontraron resultados coincidentes",
+      "searchPlaceholder": "Buscar resultados de evaluación...",
+      "totalRows": "Total de filas: {count}"
+    },
+    "metrics": {
+      "datasetSize": "Tamaño del Dataset",
+      "datasetSizeDescription": "Número de casos de prueba",
+      "createdAt": "Creado En",
+      "createdAtDescription": "Hora de creación de la tarea",
+      "completedAt": "Completado En",
+      "completedAtDescription": "Hora de finalización de la tarea",
+      "totalExecutionTime": "Tiempo Total de Ejecución",
+      "totalExecutionTimeDescription": "Tiempo total para todos los casos de prueba",
+      "notSet": "No Establecido"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "loading": {
+      "header": "Esqueleto de Encabezado",
+      "infoCards": "Esqueleto de Tarjetas de Información",
+      "resultsTable": "Esqueleto de Tabla de Resultados"
+    }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { FileTextIcon, CheckCircleIcon, Loader2 } from "lucide-react";
 import { cn } from "lib/utils";
 import { Button } from "ui/button";
@@ -17,6 +18,7 @@ export function CreateEvalDialog({
   onOpenChange,
   onCreateEval,
 }: CreateEvalDialogProps) {
+  const t = useTranslations("Eval");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -64,10 +66,10 @@ export function CreateEvalDialog({
             </div>
             <div>
               <DialogTitle className="text-xl font-serif">
-                新建评估任务
+                {t("createNewTask")}
               </DialogTitle>
               <p className="text-sm text-muted-foreground">
-                创建新的智能体评估任务，监控和优化服务质量
+                {t("createTaskDescription")}
               </p>
             </div>
           </div>
@@ -78,13 +80,16 @@ export function CreateEvalDialog({
             {/* Title Input */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                评估标题 <span className="text-destructive">*</span>
+                {t("createDialog.title")}{" "}
+                <span className="text-destructive">
+                  {t("createDialog.requiredIndicator")}
+                </span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="请输入评估任务标题..."
+                placeholder={t("createDialog.titlePlaceholder")}
                 className="w-full px-4 py-3 border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 disabled={isCreating || isCreated}
                 required
@@ -94,12 +99,12 @@ export function CreateEvalDialog({
             {/* Description Input */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                评估描述
+                {t("createDialog.description")}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="请输入评估任务的详细描述..."
+                placeholder={t("createDialog.descriptionPlaceholder")}
                 rows={4}
                 className="w-full px-4 py-3 border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none"
                 disabled={isCreating || isCreated}
@@ -111,7 +116,7 @@ export function CreateEvalDialog({
               <div className="flex items-center space-x-2 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircleIcon className="w-5 h-5 text-green-600" />
                 <span className="text-sm text-green-700 font-medium">
-                  评估任务创建成功！
+                  {t("createDialog.success")}
                 </span>
               </div>
             )}
@@ -125,7 +130,7 @@ export function CreateEvalDialog({
               onClick={handleClose}
               disabled={isCreating || isCreated}
             >
-              取消
+              {t("createDialog.cancel")}
             </Button>
             <Button
               type="submit"
@@ -135,12 +140,12 @@ export function CreateEvalDialog({
               {isCreating ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>创建中...</span>
+                  <span>{t("createDialog.creating")}</span>
                 </div>
               ) : isCreated ? (
-                "创建成功"
+                t("createDialog.created")
               ) : (
-                "立即创建"
+                t("createDialog.createNow")
               )}
             </Button>
           </div>

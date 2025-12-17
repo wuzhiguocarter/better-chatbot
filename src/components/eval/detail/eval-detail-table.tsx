@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowDownUp,
   Download,
@@ -83,18 +84,21 @@ const loadXLSX = async () => {
 };
 
 export function EvalDetailTable({
-  title = "评估结果",
+  title,
   description,
   results,
 }: EvalDetailTableProps) {
+  const t = useTranslations("Eval");
+  const displayTitle = title || t("table.resultsTitle");
+
   // Column configuration
   const columns: Column[] = [
-    { key: "index", label: "编号", type: "number" },
-    { key: "input", label: "输入内容", type: "string" },
-    { key: "actual_output", label: "输出结果", type: "string" },
-    { key: "execution_time", label: "执行时间", type: "number" },
-    { key: "success", label: "状态", type: "boolean" },
-    { key: "actions", label: "操作", type: "string" },
+    { key: "index", label: t("table.number"), type: "number" },
+    { key: "input", label: t("table.input"), type: "string" },
+    { key: "actual_output", label: t("table.output"), type: "string" },
+    { key: "execution_time", label: t("table.executionTime"), type: "number" },
+    { key: "success", label: t("table.status"), type: "boolean" },
+    { key: "actions", label: t("table.actions"), type: "string" },
   ];
 
   // Fixed settings for simplicity
@@ -119,7 +123,7 @@ export function EvalDetailTable({
       case "number":
         return typeof value === "number" ? value.toLocaleString() : value;
       case "boolean":
-        return value ? "成功" : "失败";
+        return value ? t("table.success") : t("table.failed");
       case "date":
         try {
           return new Date(value).toLocaleDateString();
@@ -248,7 +252,7 @@ export function EvalDetailTable({
         visibleCols
           .map((col) => {
             if (col.key === "success") {
-              return `"${row[col.key] ? "成功" : "失败"}"`;
+              return `"${row[col.key] ? t("table.success") : t("table.failed")}"`;
             }
             return `"${formatCellValue(row[col.key], col.type)}"`;
           })
@@ -260,7 +264,7 @@ export function EvalDetailTable({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${title.replace(/\s+/g, "_")}.csv`;
+    link.download = `${displayTitle.replace(/\s+/g, "_")}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -319,7 +323,7 @@ export function EvalDetailTable({
       XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
 
       // Save file
-      XLSX.writeFile(workbook, `${title.replace(/\s+/g, "_")}.xlsx`);
+      XLSX.writeFile(workbook, `${displayTitle.replace(/\s+/g, "_")}.xlsx`);
     } catch (error) {
       console.error("Failed to export Excel:", error);
       // Fallback to CSV if Excel export fails
@@ -329,8 +333,8 @@ export function EvalDetailTable({
 
   // Handle view process action
   const handleViewProcess = (resultId: string) => {
-    // TODO: 实现查看过程的逻辑
-    console.log("查看过程:", resultId);
+    // TODO: Implement view process logic
+    console.log("View process:", resultId);
   };
 
   const visibleColumnsArray = columns.filter((col) =>
@@ -343,7 +347,7 @@ export function EvalDetailTable({
         <CardHeader>
           <CardTitle className="text-primary font-serif flex items-center gap-2">
             <div className="w-2 h-6 bg-gradient-to-b from-primary to-primary/80 rounded-full" />
-            {title}
+            {displayTitle}
           </CardTitle>
           {description && (
             <CardDescription className="text-muted-foreground">
@@ -356,7 +360,7 @@ export function EvalDetailTable({
             {searchable && (
               <div className="flex-1">
                 <Input
-                  placeholder="搜索评估结果..."
+                  placeholder={t("table.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -487,7 +491,9 @@ export function EvalDetailTable({
                     colSpan={visibleColumnsArray.length}
                     className="text-center h-48 text-zinc-400"
                   >
-                    {searchTerm ? "没有找到匹配的结果" : "暂无评估结果"}
+                    {searchTerm
+                      ? t("table.noResultsFound")
+                      : t("detail.noResults")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -529,12 +535,16 @@ export function EvalDetailTable({
                             row[column.key] ? (
                               <div className="flex items-center justify-center gap-1 text-green-400">
                                 <div className="w-2 h-2 bg-green-400 rounded-full" />
-                                <span className="text-xs">成功</span>
+                                <span className="text-xs">
+                                  {t("table.success")}
+                                </span>
                               </div>
                             ) : (
                               <div className="flex items-center justify-center gap-1 text-red-400">
                                 <div className="w-2 h-2 bg-red-400 rounded-full" />
-                                <span className="text-xs">失败</span>
+                                <span className="text-xs">
+                                  {t("table.failed")}
+                                </span>
                               </div>
                             )
                           ) : column.key === "actions" ? (
@@ -545,7 +555,7 @@ export function EvalDetailTable({
                               className="text-primary hover:text-primary hover:bg-accent"
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              查看过程
+                              {t("table.viewProcess")}
                             </Button>
                           ) : column.key === "input" ||
                             column.key === "output" ? (

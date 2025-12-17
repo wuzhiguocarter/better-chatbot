@@ -4,7 +4,7 @@ export default function EvalDetailLoading() {
   return (
     <main className="flex-1 bg-zinc-900 min-h-screen text-zinc-100">
       <div className="w-full flex flex-col gap-4 p-8">
-        {/* 头部骨架屏 */}
+        {/* Header Skeleton */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <Skeleton className="h-10 w-10 bg-zinc-800 rounded" />
@@ -23,7 +23,7 @@ export default function EvalDetailLoading() {
           </div>
         </div>
 
-        {/* 信息卡片骨架屏 */}
+        {/* Info Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
@@ -41,7 +41,7 @@ export default function EvalDetailLoading() {
           ))}
         </div>
 
-        {/* 结果表格骨架屏 */}
+        {/* Results Table Skeleton */}
         <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-lg overflow-hidden">
           <div className="p-6 pb-0">
             <div className="flex items-center gap-3 mb-4">

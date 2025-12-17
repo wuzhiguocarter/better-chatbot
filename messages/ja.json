@@ -494,5 +494,88 @@
         "select": "選択"
       }
     }
+  },
+  "Eval": {
+    "title": "評価管理",
+    "createNew": "新規評価",
+    "createNewTask": "評価タスク作成",
+    "createTaskDescription": "新しいAIエージェント評価タスクを作成し、サービス品質を監視・最適化",
+    "searchPlaceholder": "評価ファイルを検索...",
+    "noResults": "一致する評価ファイルが見つかりません",
+    "noFiles": "評価ファイルがありません",
+    "createFirst": "最初の評価を今すぐ作成",
+    "status": {
+      "pending": "待機中",
+      "running": "実行中",
+      "completed": "完了",
+      "failed": "失敗",
+      "unknown": "不明"
+    },
+    "card": {
+      "noDescription": "説明なし",
+      "view": "表示",
+      "delete": "削除",
+      "start": "開始",
+      "stop": "停止"
+    },
+    "createDialog": {
+      "title": "評価タイトル",
+      "description": "評価説明",
+      "titlePlaceholder": "評価タスクのタイトルを入力してください...",
+      "descriptionPlaceholder": "評価タスクの詳細な説明を入力してください...",
+      "requiredIndicator": "*",
+      "success": "評価タスクが正常に作成されました！",
+      "cancel": "キャンセル",
+      "creating": "作成中...",
+      "created": "作成完了",
+      "createNow": "今すぐ作成"
+    },
+    "detail": {
+      "pageTitle": "詳細",
+      "resultsTitle": "評価結果の詳細",
+      "noResults": "評価結果がありません",
+      "loadFailed": "読み込み失敗",
+      "loadFailedMessage": "評価詳細の読み込みに失敗しました。後でもう一度お試しください",
+      "createdAt": "作成日時",
+      "completedAt": "完了日時",
+      "totalExecutionTime": "総実行時間",
+      "totalExecutionTimeDescription": "全テストケースの合計時間",
+      "resultsCount": "合計 {count} 件の評価結果（入力、出力、遅延などの詳細を含む）"
+    },
+    "table": {
+      "number": "番号",
+      "input": "入力内容",
+      "output": "出力結果",
+      "executionTime": "実行時間",
+      "totalLatency": "合計遅延 (ms)",
+      "status": "ステータス",
+      "actions": "アクション",
+      "success": "成功",
+      "failed": "失敗",
+      "viewProcess": "プロセス表示",
+      "noResultsFound": "一致する結果が見つかりません",
+      "searchPlaceholder": "評価結果を検索...",
+      "totalRows": "合計行数: {count}"
+    },
+    "metrics": {
+      "datasetSize": "データセットサイズ",
+      "datasetSizeDescription": "テストケース数",
+      "createdAt": "作成日時",
+      "createdAtDescription": "タスク作成時間",
+      "completedAt": "完了日時",
+      "completedAtDescription": "タスク完了時間",
+      "totalExecutionTime": "総実行時間",
+      "totalExecutionTimeDescription": "全テストケースの合計時間",
+      "notSet": "未設定"
+    },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ"
+    },
+    "loading": {
+      "header": "ヘッダースケルトン",
+      "infoCards": "情報カードスケルトン",
+      "resultsTable": "結果テーブルスケルトン"
+    }
   }
 }

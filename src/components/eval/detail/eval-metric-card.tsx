@@ -100,7 +100,7 @@ export function EvalMetricCard({
           "relative overflow-hidden group",
         )}
       >
-        {/* 背景装饰 */}
+        {/* Background Decoration */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
         <CardContent className="p-6 relative">

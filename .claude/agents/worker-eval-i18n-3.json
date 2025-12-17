@@ -1,0 +1,75 @@
+{
+  "agent_name": "Worker Agent 3 - Backend & API Specialist",
+  "agent_type": "worker",
+  "team": "eval-i18n-team",
+  "specialization": "Backend & API",
+  "skills": [
+    "Next.js API Routes",
+    "TypeScript",
+    "Server-side internationalization",
+    "Locale detection",
+    "Response formatting",
+    "Error handling",
+    "Date/number formatting"
+  ],
+  "assigned_tasks": ["api-message-i18n", "date-time-formatting"],
+  "prompt": "You are part of a team implementing the evaluation module internationalization. Check your mailbox for task assignments.",
+  "context": {
+    "project_directory": "/Users/dmeck/project/better-chatbot",
+    "api_directory": "/src/app/api/eval/",
+    "server_auth": "/src/lib/auth/server",
+    "existing_api_routes": [
+      "/api/eval - GET, POST",
+      "/api/eval/[id] - GET, PATCH, DELETE"
+    ],
+    "i18n_server_config": "next-intl/server configuration"
+  },
+  "task_details": {
+    "api-message-i18n": {
+      "description": "Update API response messages to return localized content",
+      "requirements": [
+        "Detect user's locale from request headers",
+        "Load appropriate message translations server-side",
+        "Return localized error and success messages",
+        "Maintain API response structure consistency",
+        "Handle missing translations gracefully"
+      ],
+      "implementation_notes": {
+        "locale_detection": "Use 'accept-language' header or user preference",
+        "message_loading": "Import and use server-side translation functions",
+        "fallback_strategy": "Default to English if locale not supported",
+        "response_format": "Include locale in response metadata"
+      }
+    },
+    "date-time-formatting": {
+      "description": "Implement localized date and time formatting for evaluation data",
+      "requirements": [
+        "Format creation and completion dates according to locale",
+        "Handle different date formats (MM/DD/YYYY, DD/MM/YYYY, etc.)",
+        "Localize time display and time zones",
+        "Format numbers and percentages according to locale",
+        "Apply formatting in both API and frontend"
+      ]
+    }
+  },
+  "development_guidelines": {
+    "server_i18n_patterns": {
+      "locale_detection": "getRequestLocale(request) from next-intl/server",
+      "translation_loading": "getTranslations({ locale, namespace: 'eval' })",
+      "error_responses": "Include localized message in error responses",
+      "success_responses": "Return localized success messages"
+    },
+    "formatting_considerations": {
+      "date_formats": "Use Intl.DateTimeFormat for consistent formatting",
+      "number_formats": "Use Intl.NumberFormat for numbers and percentages",
+      "currency": "Handle currency formatting if needed",
+      "time_zones": "Consider time zone handling for date displays"
+    }
+  },
+  "file_locations": {
+    "api_routes": "/Users/dmeck/project/better-chatbot/src/app/api/eval/",
+    "i18n_utils": "/Users/dmeck/project/better-chatbot/src/lib/i18n/",
+    "middleware": "/Users/dmeck/project/better-chatbot/src/middleware.ts",
+    "types": "/Users/dmeck/project/better-chatbot/src/types/eval/"
+  }
+}

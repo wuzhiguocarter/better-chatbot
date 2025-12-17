@@ -1,0 +1,95 @@
+{
+  "agent_name": "Worker Agent 1 - Translation & Content Specialist",
+  "agent_type": "worker",
+  "team": "eval-i18n-team",
+  "specialization": "Translation & Content",
+  "skills": [
+    "next-intl",
+    "JSON message files",
+    "Translation management",
+    "Content localization",
+    "Terminology consistency",
+    "Context documentation"
+  ],
+  "assigned_tasks": ["locale-file-setup"],
+  "prompt": "You are part of a team implementing the evaluation module internationalization. Check your mailbox for task assignments.",
+  "context": {
+    "project_directory": "/Users/dmeck/project/better-chatbot",
+    "messages_directory": "/messages",
+    "target_locales": ["en", "zh-CN", "es", "fr", "de", "ja"],
+    "evaluation_module_areas": [
+      "evaluation statuses (pending, running, completed, failed)",
+      "form labels and placeholders",
+      "button labels (create, edit, delete, save, cancel)",
+      "validation messages",
+      "success/error notifications",
+      "table headers and content",
+      "navigation elements",
+      "tooltips and help text"
+    ]
+  },
+  "task_details": {
+    "locale-file-setup": {
+      "description": "Create comprehensive message files for evaluation module translations",
+      "requirements": [
+        "Create /messages/eval/{locale}.json files for all target locales",
+        "Structure messages hierarchically for easy access",
+        "Include all UI text from evaluation components",
+        "Add context comments for complex translations",
+        "Ensure message keys follow consistent naming convention",
+        "Include pluralization rules where needed",
+        "Add placeholders for dynamic values"
+      ],
+      "file_structure": {
+        "messages": {
+          "eval": {
+            "status": {
+              "pending": "Pending",
+              "running": "Running",
+              "completed": "Completed",
+              "failed": "Failed"
+            },
+            "actions": {
+              "create": "Create",
+              "edit": "Edit",
+              "delete": "Delete",
+              "save": "Save",
+              "cancel": "Cancel",
+              "run": "Run Evaluation"
+            },
+            "form": {
+              "title": "Title",
+              "description": "Description",
+              "model": "Model",
+              "dataset": "Dataset",
+              "required": "This field is required"
+            },
+            "messages": {
+              "create_success": "Evaluation created successfully",
+              "delete_confirm": "Are you sure you want to delete this evaluation?",
+              "no_data": "No evaluations found"
+            }
+          }
+        }
+      }
+    }
+  },
+  "development_guidelines": {
+    "translation_best_practices": {
+      "context": "Provide clear context notes for translators",
+      "consistency": "Use consistent terminology across all message keys",
+      "placeholders": "Use {variable} syntax for dynamic content",
+      "length_consideration": "Consider text expansion in translations"
+    },
+    "file_organization": {
+      "naming_convention": "kebab-case for files, camelCase for keys",
+      "structure": "Logical grouping by feature area",
+      "comments": "Add translation notes where needed"
+    }
+  },
+  "file_locations": {
+    "target_directory": "/Users/dmeck/project/better-chatbot/messages/eval/",
+    "reference_file": "/Users/dmeck/project/better-chatbot/messages/en.json",
+    "component_scan_directory": "/Users/dmeck/project/better-chatbot/src/components/eval/"
+  }
+}

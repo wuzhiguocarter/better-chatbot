@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { EvalMetricCard } from "./eval-metric-card";
 import { EvaluationDetail } from "@/types/eval/index";
 
@@ -7,35 +8,37 @@ interface EvalInfoCardsProps {
   evaluation: EvaluationDetail;
 }
 
-// Helper function to format date
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return "未设置";
-  const date = new Date(dateString);
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-};
-
-// Helper function to format execution time
-const formatExecutionTime = (totalMs: number) => {
-  if (totalMs < 1000) {
-    return `${totalMs}ms`;
-  } else if (totalMs < 60000) {
-    return `${(totalMs / 1000).toFixed(2)}s`;
-  } else {
-    const minutes = Math.floor(totalMs / 60000);
-    const seconds = ((totalMs % 60000) / 1000).toFixed(1);
-    return `${minutes}m ${seconds}s`;
-  }
-};
-
 export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
+  const t = useTranslations("Eval");
+
+  // Helper function to format date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return t("metrics.notSet");
+    const date = new Date(dateString);
+    return date.toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Helper function to format execution time
+  const formatExecutionTime = (totalMs: number) => {
+    if (totalMs < 1000) {
+      return `${totalMs}ms`;
+    } else if (totalMs < 60000) {
+      return `${(totalMs / 1000).toFixed(2)}s`;
+    } else {
+      const minutes = Math.floor(totalMs / 60000);
+      const seconds = ((totalMs % 60000) / 1000).toFixed(1);
+      return `${minutes}m ${seconds}s`;
+    }
+  };
+
   // Calculate total execution time from results array
   const totalExecutionTime =
     evaluation.results?.reduce(
@@ -45,40 +48,40 @@ export function EvalInfoCards({ evaluation }: EvalInfoCardsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* 数据集大小 */}
+      {/* Dataset Size */}
       <EvalMetricCard
-        title="数据集大小"
+        title={t("metrics.datasetSize")}
         value={
           evaluation.configuration?.dataset_size ||
           evaluation.results?.length ||
           0
         }
         icon="file"
-        description="测试用例数量"
+        description={t("metrics.datasetSizeDescription")}
       />
 
-      {/* 创建时间 */}
+      {/* Created At */}
       <EvalMetricCard
-        title="创建时间"
+        title={t("metrics.createdAt")}
         value={formatDate(evaluation.date_created)}
         icon="clock"
-        description="任务创建时间"
+        description={t("metrics.createdAtDescription")}
       />
 
-      {/* 结束时间 */}
+      {/* Completed At */}
       <EvalMetricCard
-        title="结束时间"
+        title={t("metrics.completedAt")}
         value={formatDate(evaluation.date_completed)}
         icon="clock"
-        description="任务完成时间"
+        description={t("metrics.completedAtDescription")}
       />
 
-      {/* 总执行时间 */}
+      {/* Total Execution Time */}
       <EvalMetricCard
-        title="总执行时间"
+        title={t("metrics.totalExecutionTime")}
         value={formatExecutionTime(totalExecutionTime)}
         icon="trend"
-        description="所有测试用例总耗时"
+        description={t("metrics.totalExecutionTimeDescription")}
       />
     </div>
   );

@@ -1,0 +1,188 @@
+{
+  "team_name": "eval-i18n-team",
+  "team_description": "Team implementing evaluation module internationalization",
+  "project_context": {
+    "project_name": "Better Chatbot",
+    "tech_stack": ["Next.js", "React", "TypeScript", "Tailwind CSS"],
+    "current_i18n_setup": {
+      "framework": "next-intl",
+      "existing_locales": ["en"],
+      "messages_directory": "/messages",
+      "configuration_file": "src/i18n.ts"
+    },
+    "evaluation_module_components": [
+      "eval-page-client.tsx - Main evaluation page client",
+      "eval-card.tsx - Evaluation card component",
+      "eval-main-content.tsx - Main content area",
+      "eval-sidebar.tsx - Sidebar navigation",
+      "create-eval-dialog.tsx - Create evaluation dialog",
+      "eval-detail-view.tsx - Evaluation detail view"
+    ]
+  },
+  "i18n_requirements": {
+    "target_locales": ["en", "zh-CN", "es", "fr", "de", "ja"],
+    "localization_areas": [
+      "UI labels and buttons",
+      "Status messages and notifications",
+      "Form validation messages",
+      "Error messages",
+      "Success confirmations",
+      "Tooltips and help text",
+      "Date and time formatting",
+      "Number formatting"
+    ]
+  },
+  "implementation_tasks": [
+    {
+      "task_id": "locale-file-setup",
+      "title": "Create Locale Files for Evaluation Module",
+      "description": "Create message files for all target languages containing evaluation module translations",
+      "priority": "high",
+      "dependencies": []
+    },
+    {
+      "task_id": "component-integration",
+      "title": "Integrate i18n into Evaluation Components",
+      "description": "Update all evaluation components to use internationalized messages",
+      "priority": "high",
+      "dependencies": ["locale-file-setup"]
+    },
+    {
+      "task_id": "form-validation-i18n",
+      "title": "Internationalize Form Validation Messages",
+      "description": "Update form validation messages to support multiple languages",
+      "priority": "medium",
+      "dependencies": ["locale-file-setup"]
+    },
+    {
+      "task_id": "api-message-i18n",
+      "title": "Internationalize API Response Messages",
+      "description": "Update API response messages to return localized messages",
+      "priority": "medium",
+      "dependencies": ["locale-file-setup"]
+    },
+    {
+      "task_id": "date-time-formatting",
+      "title": "Implement Localized Date and Time Formatting",
+      "description": "Ensure dates and times are formatted according to user's locale",
+      "priority": "medium",
+      "dependencies": ["locale-file-setup"]
+    },
+    {
+      "task_id": "language-switcher",
+      "title": "Add Language Switcher to Evaluation Pages",
+      "description": "Create and integrate a language switcher component in evaluation pages",
+      "priority": "low",
+      "dependencies": ["component-integration"]
+    },
+    {
+      "task_id": "testing-validation",
+      "title": "Test Internationalization Implementation",
+      "description": "Test all locales and ensure proper functionality across evaluation module",
+      "priority": "low",
+      "dependencies": ["component-integration", "api-message-i18n"]
+    },
+    {
+      "task_id": "eval-i18n-001",
+      "title": "Add Eval section to zh.json translation file",
+      "description": "Add a comprehensive `Eval` section to `/messages/zh.json` with all Chinese text from the evaluation module. The section should include:\n\n1. Basic UI text (title, buttons, placeholders)\n2. Status messages (pending, running, completed, failed, unknown)\n3. Card component text\n4. Dialog text for creating evaluations\n5. Detail page text\n6. Table headers and messages\n7. Metrics descriptions\n8. Pagination text\n9. Loading skeleton comments\n\nUse the exact Chinese text identified in the plan. Ensure proper JSON formatting and nested structure for logical grouping.",
+      "priority": "high",
+      "estimated_effort": "30 minutes",
+      "dependencies": ["locale-file-setup"],
+      "assigned_to": "Worker Agent 1",
+      "acceptance_criteria": [
+        "All evaluation module Chinese text is included in the zh.json file",
+        "Proper JSON formatting with no syntax errors",
+        "Nested structure follows logical grouping",
+        "Message keys match the component implementation",
+        "No hardcoded Chinese text remains in components"
+      ]
+    },
+    {
+      "task_id": "eval-i18n-002",
+      "title": "Update client components with useTranslations hook",
+      "description": "Update all client components in the evaluation module to use the useTranslations hook instead of hardcoded Chinese text. Components to update:\n\n1. `/src/components/eval/eval-main-content.tsx`\n2. `/src/components/eval/eval-card.tsx`\n3. `/src/components/eval/create-eval-dialog.tsx`\n4. `/src/components/eval/eval-page-client.tsx`\n5. `/src/components/eval/detail/eval-detail-page.tsx`\n6. `/src/components/eval/detail/eval-detail-header.tsx`\n7. `/src/components/eval/detail/eval-info-cards.tsx`\n8. `/src/components/eval/detail/eval-results-table.tsx`\n9. `/src/components/eval/detail/eval-detail-table.tsx`\n10. `/src/components/eval/detail/eval-metric-card.tsx`\n11. `/src/components/eval/eval-pagination.tsx`\n\nFor each component:\n- Import useTranslations from next-intl\n- Create a t function with 'Eval' namespace\n- Replace all hardcoded Chinese text with appropriate t() calls\n- Handle dynamic values like {count} and {date} properly\n- Ensure consistent key naming with camelCase",
+      "priority": "high",
+      "estimated_effort": "2 hours",
+      "dependencies": ["eval-i18n-001"],
+      "assigned_to": "Worker Agent 2",
+      "acceptance_criteria": [
+        "All 11 components updated with useTranslations hook",
+        "No hardcoded Chinese text remaining in evaluation components",
+        "All translation keys follow camelCase naming convention",
+        "Dynamic values properly interpolated",
+        "Components function correctly after internationalization",
+        "Translation key documentation provided"
+      ]
+    }
+  ],
+  "team_structure": {
+    "team_lead": "Claude Sonnet 4.5",
+    "members": [
+      {
+        "name": "Worker Agent 1",
+        "type": "worker",
+        "specialization": "Translation & Content",
+        "assigned_tasks": ["locale-file-setup", "eval-i18n-001"]
+      },
+      {
+        "name": "Worker Agent 2",
+        "type": "worker",
+        "specialization": "Frontend Integration",
+        "assigned_tasks": [
+          "component-integration",
+          "form-validation-i18n",
+          "language-switcher",
+          "eval-i18n-002"
+        ]
+      },
+      {
+        "name": "Worker Agent 3",
+        "type": "worker",
+        "specialization": "Backend & API",
+        "assigned_tasks": ["api-message-i18n", "date-time-formatting"]
+      }
+    ]
+  },
+  "development_guidelines": {
+    "code_style": {
+      "typescript": "Strict TypeScript with proper typing",
+      "components": "Functional components with hooks",
+      "i18n_library": "next-intl",
+      "message_keys": "Hierarchical structure (e.g., eval.status.pending)"
+    },
+    "file_organization": {
+      "locale_files": "/messages/eval/{locale}.json",
+      "types": "src/types/eval/i18n.ts",
+      "utils": "src/lib/eval/i18n.ts",
+      "components": "src/components/eval/"
+    },
+    "translation_guidelines": {
+      "consistency": "Use consistent terminology across all locales",
+      "context": "Provide context notes for translators",
+      "placeholders": "Use proper placeholder formatting for dynamic values",
+      "pluralization": "Handle plural forms correctly for each language"
+    }
+  },
+  "success_criteria": {
+    "functional": [
+      "All evaluation module text is internationalized",
+      "Users can switch languages seamlessly",
+      "Form validation messages appear in selected language",
+      "API responses are localized",
+      "Date and number formatting follows locale conventions",
+      "No hardcoded strings remain in components"
+    ],
+    "quality": [
+      "Accurate translations for all supported languages",
+      "Consistent terminology and tone",
+      "Proper handling of text expansion in different languages",
+      "Accessibility maintained across all locales"
+    ],
+    "performance": [
+      "Minimal impact on bundle size",
+      "Efficient locale loading",
+      "Smooth language switching without page reload"
+    ]
+  }
+}

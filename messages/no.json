@@ -797,5 +797,88 @@
     "publicDescription": "Offentlig for alle brukere",
     "featured": "Fremhevet",
     "featuredDescription": "Fremhevet for alle brukere"
+  },
+  "Eval": {
+    "title": "Evalueringadministrasjon",
+    "createNew": "Ny Evaluering",
+    "createNewTask": "Opprett Evalueringoppgave",
+    "createTaskDescription": "Opprett nye AI-agent evalueringoppgaver for å overvåke og optimalisere servicetilbud",
+    "searchPlaceholder": "Søk evalueringsfiler...",
+    "noResults": "Ingen samsvarende evalueringsfiler funnet",
+    "noFiles": "Ingen evalueringsfiler",
+    "createFirst": "Opprett den første evalueringen nå",
+    "status": {
+      "pending": "Venter",
+      "running": "Kjører",
+      "completed": "Fullført",
+      "failed": "Feilet",
+      "unknown": "Ukjent"
+    },
+    "card": {
+      "noDescription": "Ingen beskrivelse",
+      "view": "Vis",
+      "delete": "Slett",
+      "start": "Start",
+      "stop": "Stopp"
+    },
+    "createDialog": {
+      "title": "Evalueringstittel",
+      "description": "Evalueringbeskrivelse",
+      "titlePlaceholder": "Vennligst skriv inn evalueringoppgave-tittel...",
+      "descriptionPlaceholder": "Vennligst skriv inn detaljert beskrivelse av evalueringoppgaven...",
+      "requiredIndicator": "*",
+      "success": "Evalueringoppgave opprettet vellykket!",
+      "cancel": "Avbryt",
+      "creating": "Oppretter...",
+      "created": "Opprettet",
+      "createNow": "Opprett Nå"
+    },
+    "detail": {
+      "pageTitle": "Detaljer",
+      "resultsTitle": "Detaljer for Evalueringresultater",
+      "noResults": "Ingen evalueringresultater",
+      "loadFailed": "Innlasting Feilet",
+      "loadFailedMessage": "Kunne ikke laste evalueringdetaljer, vennligst prøv igjen senere",
+      "createdAt": "Opprettet Dato",
+      "completedAt": "Fullført Dato",
+      "totalExecutionTime": "Total Eksekveringstid",
+      "totalExecutionTimeDescription": "Total tid for alle testtilfeller",
+      "resultsCount": "Totalt {count} evalueringresultater, inkludert input, output, latens og andre detaljer"
+    },
+    "table": {
+      "number": "Nummer",
+      "input": "Inputinnhold",
+      "output": "Outputresultat",
+      "executionTime": "Eksekveringstid",
+      "totalLatency": "Total Latens (ms)",
+      "status": "Status",
+      "actions": "Handlinger",
+      "success": "Suksess",
+      "failed": "Feilet",
+      "viewProcess": "Vis Prosess",
+      "noResultsFound": "Ingen samsvarende resultater funnet",
+      "searchPlaceholder": "Søk evalueringresultater...",
+      "totalRows": "Totalt antall rader: {count}"
+    },
+    "metrics": {
+      "datasetSize": "Datasettstørrelse",
+      "datasetSizeDescription": "Antall testtilfeller",
+      "createdAt": "Opprettet Dato",
+      "createdAtDescription": "Oppgave opprettelsestid",
+      "completedAt": "Fullført Dato",
+      "completedAtDescription": "Oppgave fullføringstid",
+      "totalExecutionTime": "Total Eksekveringstid",
+      "totalExecutionTimeDescription": "Total tid for alle testtilfeller",
+      "notSet": "Ikke Satt"
+    },
+    "pagination": {
+      "previous": "Forrige",
+      "next": "Neste"
+    },
+    "loading": {
+      "header": "Header Skjelett",
+      "infoCards": "Informasjonskort Skjelett",
+      "resultsTable": "Resultattabell Skjelett"
+    }
   }
 }

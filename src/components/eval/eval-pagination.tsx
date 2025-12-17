@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "lib/utils";
 import { Button } from "ui/button";
@@ -19,22 +20,24 @@ export function EvalPagination({
   hasNextPage = true,
   hasPreviousPage = false,
 }: EvalPaginationProps) {
+  const t = useTranslations("Eval");
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <div className="flex items-center justify-center space-x-2">
-      {/* 上一页按钮 */}
+      {/* Previous Page Button */}
       <Button
         variant="outline"
         size="icon"
         onClick={() => hasPreviousPage && setCurrentPage(currentPage - 1)}
         disabled={!hasPreviousPage}
         className="w-9 h-9 rounded-full"
+        title={t("pagination.previous")}
       >
         <ChevronLeftIcon className="w-4 h-4" />
       </Button>
 
-      {/* 页码按钮 */}
+      {/* Page Number Buttons */}
       {pages.map((page) => (
         <Button
           key={page}
@@ -50,13 +53,14 @@ export function EvalPagination({
         </Button>
       ))}
 
-      {/* 下一页按钮 */}
+      {/* Next Page Button */}
       <Button
         variant="outline"
         size="icon"
         onClick={() => hasNextPage && setCurrentPage(currentPage + 1)}
         disabled={!hasNextPage}
         className="w-9 h-9 rounded-full"
+        title={t("pagination.next")}
       >
         <ChevronRightIcon className="w-4 h-4" />
       </Button>
