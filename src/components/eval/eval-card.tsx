@@ -25,10 +25,17 @@ interface EvalCardProps {
   file: EvalFile;
   onView: (id: string) => void;
   onAction: (id: string, action: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
+  deletingId?: string | null;
 }
 
-export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
+export function EvalCard({
+  file,
+  onView,
+  onAction,
+  onDelete,
+  deletingId,
+}: EvalCardProps) {
   const t = useTranslations("Eval");
 
   const getStatusText = () => {
@@ -169,8 +176,14 @@ export function EvalCard({ file, onView, onAction, onDelete }: EvalCardProps) {
               }}
               className="h-8 w-8 text-destructive hover:text-destructive"
               title={t("card.delete")}
+              disabled={deletingId === file.id}
             >
-              <TrashIcon className="h-4 w-4" />
+              <TrashIcon
+                className={cn(
+                  "h-4 w-4",
+                  deletingId === file.id && "animate-spin opacity-60",
+                )}
+              />
             </Button>
           </div>
         </div>

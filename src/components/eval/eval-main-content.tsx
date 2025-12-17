@@ -27,8 +27,9 @@ interface EvalMainContentProps {
     file: File | null,
   ) => Promise<void>;
   onFileAction: (fileId: string, action: string) => void;
-  onDeleteFile: (fileId: string) => void;
+  onDeleteFile: (fileId: string) => Promise<void>;
   onRefresh: () => Promise<void>;
+  deletingId?: string | null;
 }
 
 export function EvalMainContent({
@@ -45,6 +46,7 @@ export function EvalMainContent({
   onFileAction,
   onDeleteFile,
   onRefresh,
+  deletingId,
 }: EvalMainContentProps) {
   const router = useRouter();
   const t = useTranslations("Eval");
@@ -134,6 +136,7 @@ export function EvalMainContent({
                 }}
                 onAction={onFileAction}
                 onDelete={onDeleteFile}
+                deletingId={deletingId}
               />
             ))}
           </div>

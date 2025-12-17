@@ -12,6 +12,7 @@ export function EvalPageClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [pageLimit, setPageLimit] = useState(9);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -132,16 +133,27 @@ export function EvalPageClient() {
   };
 
   const handleDeleteFile = async (fileId: string) => {
+    if (!fileId) return;
+
+    setDeletingId(fileId);
+
     try {
       const response = await fetch(`/api/eval/${fileId}`, {
         method: "DELETE",
       });
 
-      if (response.ok) {
-        fetchFiles(); // Refresh the list
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to delete evaluation file");
       }
+
+      await fetchFiles();
+      toast.success("删除成功");
     } catch (error) {
       console.error("Failed to delete file:", error);
+      toast.error("删除失败，请稍后再试");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -165,6 +177,7 @@ export function EvalPageClient() {
       onFileAction={handleFileAction}
       onDeleteFile={handleDeleteFile}
       onRefresh={fetchFiles}
+      deletingId={deletingId}
     />
   );
 }

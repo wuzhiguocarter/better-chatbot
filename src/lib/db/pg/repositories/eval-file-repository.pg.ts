@@ -15,7 +15,10 @@ export const pgEvalFileRepository: EvalFileRepository = {
     limit,
     search,
   }: EvalFileListQuery) {
-    const conditions = [eq(EvalFileTable.userId, userId)];
+    const conditions = [
+      eq(EvalFileTable.userId, userId),
+      eq(EvalFileTable.isDeleted, false),
+    ];
 
     if (search && search.trim()) {
       const term = `%${search.trim()}%`;
@@ -61,5 +64,26 @@ export const pgEvalFileRepository: EvalFileRepository = {
       .returning();
 
     return row as EvalFileEntity;
+  },
+
+  async softDeleteEvalFile({ id, userId }) {
+    const [row] = await db
+      .update(EvalFileTable)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        status: "deleted",
+      })
+      .where(
+        and(
+          eq(EvalFileTable.id, id),
+          eq(EvalFileTable.userId, userId),
+          eq(EvalFileTable.isDeleted, false),
+        ),
+      )
+      .returning();
+
+    return (row ?? null) as EvalFileEntity | null;
   },
 };
