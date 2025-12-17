@@ -1,54 +1,115 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EvalMainContent } from "./eval-main-content";
 import { EvalFile } from "@/types/eval";
+import { toast } from "sonner";
 
 export function EvalPageClient() {
   const [files, setFiles] = useState<EvalFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageLimit, setPageLimit] = useState(9);
 
-  useEffect(() => {
-    fetchFiles();
-  }, [searchQuery, currentPage]);
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: "9",
+        limit: pageLimit.toString(),
         ...(searchQuery && { search: searchQuery }),
       });
 
       const response = await fetch(`/api/eval?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch evaluation files");
+      }
+
       const data = await response.json();
 
-      setFiles(data.files);
+      setFiles(data.files ?? []);
+      setTotalCount(Number(data.total ?? data.files?.length ?? 0));
+      if (data.limit) {
+        setPageLimit(Number(data.limit));
+      }
     } catch (error) {
       console.error("Failed to fetch evaluation files:", error);
+      toast.error("获取评测列表失败");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageLimit, searchQuery]);
 
-  const handleCreateEval = async (title: string, description?: string) => {
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
+
+  const handleCreateEval = async (
+    title: string,
+    description: string,
+    file: File | null,
+  ) => {
+    if (!title.trim()) {
+      toast.error("标题不能为空");
+      throw new Error("Title is required");
+    }
+
+    if (!file) {
+      toast.error("请先选择一个 CSV / Excel 文件");
+      throw new Error("File is required");
+    }
+
     try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        toast.error("文件上传失败");
+        throw new Error("Upload failed");
+      }
+
+      const uploadData = await uploadRes.json();
+      const { key, url } = uploadData;
+
+      if (!key || !url) {
+        toast.error("文件上传响应异常");
+        throw new Error("Invalid upload response");
+      }
+
       const response = await fetch("/api/eval", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({
+          title,
+          description,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          storageKey: key,
+          fileUrl: url,
+        }),
       });
 
-      if (response.ok) {
-        fetchFiles(); // Refresh the list
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        toast.error(errorBody.error || "创建评测任务失败");
+        throw new Error(errorBody.error || "Failed to create evaluation");
       }
+
+      await fetchFiles();
+      toast.success("评测任务创建成功");
     } catch (error) {
       console.error("Failed to create evaluation:", error);
+      throw error;
     }
   };
 
@@ -84,6 +145,11 @@ export function EvalPageClient() {
     }
   };
 
+  const totalPages = useMemo(() => {
+    if (!totalCount || !pageLimit) return 1;
+    return Math.max(1, Math.ceil(totalCount / pageLimit));
+  }, [pageLimit, totalCount]);
+
   return (
     <EvalMainContent
       files={files}
@@ -92,6 +158,9 @@ export function EvalPageClient() {
       setSearchQuery={setSearchQuery}
       currentPage={currentPage}
       setCurrentPage={setCurrentPage}
+      totalPages={totalPages}
+      hasNextPage={currentPage < totalPages}
+      hasPreviousPage={currentPage > 1}
       onCreateEval={handleCreateEval}
       onFileAction={handleFileAction}
       onDeleteFile={handleDeleteFile}
