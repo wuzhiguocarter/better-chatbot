@@ -182,6 +182,8 @@ export const EvalFileTable = pgTable("eval_files", {
   fileSize: bigint("file_size", { mode: "number" }).notNull(),
   storageKey: varchar("storage_key", { length: 512 }).notNull(),
   fileUrl: varchar("file_url", { length: 1024 }).notNull(),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

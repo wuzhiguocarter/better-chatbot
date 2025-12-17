@@ -1,4 +1,9 @@
-export type EvalFileStatus = "pending" | "running" | "completed" | "failed";
+export type EvalFileStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "deleted";
 
 export interface EvalFile {
   id: string;
@@ -25,13 +30,15 @@ export type EvalFileEntity = {
   fileSize: number;
   storageKey: string;
   fileUrl: string;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
 export type EvalFileCreateInput = Omit<
   EvalFileEntity,
-  "id" | "createdAt" | "updatedAt"
+  "id" | "createdAt" | "updatedAt" | "isDeleted" | "deletedAt"
 >;
 
 export type EvalFileListQuery = {
@@ -47,4 +54,8 @@ export type EvalFileRepository = {
     total: number;
   }>;
   createEvalFile(input: EvalFileCreateInput): Promise<EvalFileEntity>;
+  softDeleteEvalFile(params: {
+    id: string;
+    userId: string;
+  }): Promise<EvalFileEntity | null>;
 };

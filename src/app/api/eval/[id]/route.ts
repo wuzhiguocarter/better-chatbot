@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "lib/auth/server";
+import { evalFileRepository } from "lib/db/repository";
+
+type RouteContext = {
+  params: { id: string };
+};
 
 // Transform function to convert mock results to EvaluationResultItem format
 function transformLegacyResults(legacyResults: any[]): any[] {
@@ -15,16 +20,13 @@ function transformLegacyResults(legacyResults: any[]): any[] {
   }));
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: RouteContext) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
 
   // Legacy mock data for transformation
   const legacyResults = [
@@ -132,16 +134,13 @@ export async function GET(
   });
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
   const body = await request.json();
   const { action } = body;
 
@@ -173,18 +172,33 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   const session = await getSession();
-  if (!session) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
 
-  // Delete evaluation file
-  // TODO: Implement actual deletion logic using the extracted id
-  return NextResponse.json({ success: true, deletedId: id });
+  try {
+    const deleted = await evalFileRepository.softDeleteEvalFile({
+      id,
+      userId: session.user.id,
+    });
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Eval file not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[DELETE /api/eval/:id] error", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
