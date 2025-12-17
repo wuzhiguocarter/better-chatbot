@@ -28,11 +28,31 @@ export const ChatThreadTable = pgTable("chat_thread", {
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const EvalTaskChatThreadTable = pgTable("eval_task_chat_thread", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  title: text("title").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const ChatMessageTable = pgTable("chat_message", {
   id: text("id").primaryKey().notNull(),
   threadId: uuid("thread_id")
     .notNull()
     .references(() => ChatThreadTable.id, { onDelete: "cascade" }),
+  role: text("role").notNull().$type<UIMessage["role"]>(),
+  parts: json("parts").notNull().array().$type<UIMessage["parts"]>(),
+  metadata: json("metadata").$type<ChatMetadata>(),
+  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const EvalTaskChatMessageTable = pgTable("eval_task_chat_message", {
+  id: text("id").primaryKey().notNull(),
+  threadId: uuid("thread_id")
+    .notNull()
+    .references(() => EvalTaskChatThreadTable.id, { onDelete: "cascade" }),
   role: text("role").notNull().$type<UIMessage["role"]>(),
   parts: json("parts").notNull().array().$type<UIMessage["parts"]>(),
   metadata: json("metadata").$type<ChatMetadata>(),
