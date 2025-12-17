@@ -18,10 +18,17 @@ interface EvalMainContentProps {
   setSearchQuery: (query: string) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
-  onCreateEval: (title: string, description?: string) => void;
+  totalPages?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  onCreateEval: (
+    title: string,
+    description: string,
+    file: File | null,
+  ) => Promise<void>;
   onFileAction: (fileId: string, action: string) => void;
   onDeleteFile: (fileId: string) => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void>;
 }
 
 export function EvalMainContent({
@@ -31,6 +38,9 @@ export function EvalMainContent({
   setSearchQuery,
   currentPage,
   setCurrentPage,
+  totalPages,
+  hasNextPage,
+  hasPreviousPage,
   onCreateEval,
   onFileAction,
   onDeleteFile,
@@ -43,7 +53,7 @@ export function EvalMainContent({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    onRefresh();
+    await onRefresh();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
@@ -139,6 +149,9 @@ export function EvalMainContent({
             <EvalPagination
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+              hasNextPage={hasNextPage}
+              hasPreviousPage={hasPreviousPage}
             />
           </div>
         )}

@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FileTextIcon, CheckCircleIcon, Loader2 } from "lucide-react";
 import { cn } from "lib/utils";
 import { Button } from "ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "ui/dialog";
+import { Label } from "ui/label";
+import { toast } from "sonner";
 
 interface CreateEvalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateEval: (title: string, description?: string) => void;
+  onCreateEval: (
+    title: string,
+    description: string,
+    file: File | null,
+  ) => Promise<void>;
 }
 
 export function CreateEvalDialog({
@@ -23,6 +29,31 @@ export function CreateEvalDialog({
   const [description, setDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+
+    const allowedTypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ];
+
+    if (!allowedTypes.includes(selected.type)) {
+      toast.error("仅支持 CSV/Excel 文件");
+      setFile(null);
+      e.target.value = "";
+      return;
+    }
+
+    setFile(selected);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,13 +62,17 @@ export function CreateEvalDialog({
 
     setIsCreating(true);
     try {
-      await onCreateEval(title.trim(), description.trim());
+      await onCreateEval(title.trim(), description.trim(), file);
       setIsCreated(true);
 
       // Reset form after 2 seconds
       setTimeout(() => {
         setTitle("");
         setDescription("");
+        setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
         setIsCreated(false);
         onOpenChange(false);
       }, 2000);
@@ -52,6 +87,10 @@ export function CreateEvalDialog({
     if (!isCreating && !isCreated) {
       setTitle("");
       setDescription("");
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       onOpenChange(false);
     }
   };
@@ -108,6 +147,32 @@ export function CreateEvalDialog({
                 rows={4}
                 className="w-full px-4 py-3 border border-border rounded-lg bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 resize-none"
                 disabled={isCreating || isCreated}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>上传数据文件（CSV / Excel）</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isCreating || isCreated}
+                >
+                  选择文件
+                </Button>
+                {file && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    {file.name} ({Math.round(file.size / 1024)} KB)
+                  </span>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={handleFileChange}
               />
             </div>
 

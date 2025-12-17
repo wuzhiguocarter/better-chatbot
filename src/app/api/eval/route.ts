@@ -1,141 +1,119 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "lib/auth/server";
+import { evalFileRepository } from "lib/db/repository";
+import type { EvalFile } from "@/types/eval";
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const searchParams = request.nextUrl.searchParams;
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "9");
-  const search = searchParams.get("search") || "";
+  const { searchParams } = new URL(req.url);
+  const page = Number(searchParams.get("page") ?? 1);
+  const limit = Number(searchParams.get("limit") ?? 10);
+  const search = searchParams.get("search") ?? "";
 
-  // Mock data for evaluation files
-  const mockEvalFiles = [
-    {
-      id: "1",
-      title: "企业服务智能体评估",
-      status: "running",
-      date: "2025/12/31",
-      description: "评估企业服务智能体的性能和准确性",
-    },
-    {
-      id: "2",
-      title: "客服机器人效果评估",
-      status: "completed",
-      date: "2025/12/30",
-      description: "评估客服机器人在实际场景中的表现",
-    },
-    {
-      id: "3",
-      title: "数据分析助手评估",
-      status: "pending",
-      date: "2025/12/29",
-      description: "评估数据分析助手的数据处理能力",
-    },
-    {
-      id: "4",
-      title: "智能写作助手评估",
-      status: "completed",
-      date: "2025/12/28",
-      description: "评估智能写作助手的文本生成质量",
-    },
-    {
-      id: "5",
-      title: "代码审查智能体评估",
-      status: "running",
-      date: "2025/12/27",
-      description: "评估代码审查智能体的准确性",
-    },
-    {
-      id: "6",
-      title: "翻译系统评估",
-      status: "pending",
-      date: "2025/12/26",
-      description: "评估翻译系统的翻译质量",
-    },
-    {
-      id: "7",
-      title: "推荐算法评估",
-      status: "completed",
-      date: "2025/12/25",
-      description: "评估推荐算法的准确性",
-    },
-    {
-      id: "8",
-      title: "情感分析评估",
-      status: "running",
-      date: "2025/12/24",
-      description: "评估情感分析模型的准确性",
-    },
-    {
-      id: "9",
-      title: "图像识别评估",
-      status: "pending",
-      date: "2025/12/23",
-      description: "评估图像识别模型的性能",
-    },
-    {
-      id: "10",
-      title: "语音转文字评估",
-      status: "completed",
-      date: "2025/12/22",
-      description: "评估语音转文字的准确率",
-    },
-  ];
+  const { rows, total } = await evalFileRepository.listEvalFilesByUserId({
+    userId: session.user.id,
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : 10,
+    search,
+  });
 
-  // Filter by search term
-  let filteredFiles = mockEvalFiles;
-  if (search) {
-    filteredFiles = mockEvalFiles.filter(
-      (file) =>
-        file.title.toLowerCase().includes(search.toLowerCase()) ||
-        file.description.toLowerCase().includes(search.toLowerCase()),
-    );
-  }
-
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedFiles = filteredFiles.slice(startIndex, endIndex);
+  const files: EvalFile[] = rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description ?? undefined,
+    status: row.status,
+    date: row.createdAt.toISOString(),
+    fileName: row.fileName,
+    fileType: row.fileType,
+    fileSize: row.fileSize,
+    fileUrl: row.fileUrl,
+    storageKey: row.storageKey,
+  }));
 
   return NextResponse.json({
-    files: paginatedFiles,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(filteredFiles.length / limit),
-      totalFiles: filteredFiles.length,
-      hasNextPage: endIndex < filteredFiles.length,
-      hasPreviousPage: page > 1,
-    },
+    files,
+    total,
+    page: Number.isFinite(page) && page > 0 ? page : 1,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : 10,
   });
 }
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
-  if (!session) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await request.json();
-  const { title, description } = body;
-
-  // Create new evaluation file
-  const newEvalFile = {
-    id: Date.now().toString(),
+  const {
     title,
-    description: description || "",
+    description,
+    fileName,
+    fileType,
+    fileSize,
+    storageKey,
+    fileUrl,
+  } = body;
+
+  if (
+    !title ||
+    !fileName ||
+    !fileType ||
+    !fileSize ||
+    !storageKey ||
+    !fileUrl
+  ) {
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 },
+    );
+  }
+
+  const allowedTypes = [
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ];
+
+  if (!allowedTypes.includes(fileType)) {
+    return NextResponse.json(
+      { error: "Unsupported file type" },
+      { status: 400 },
+    );
+  }
+
+  if (!Number.isFinite(fileSize) || fileSize <= 0) {
+    return NextResponse.json({ error: "Invalid file size" }, { status: 400 });
+  }
+
+  const row = await evalFileRepository.createEvalFile({
+    userId: session.user.id,
+    title,
+    description: description ?? null,
     status: "pending",
-    date: new Date()
-      .toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
-      .replace(/\//g, "/"),
+    fileName,
+    fileType,
+    fileSize,
+    storageKey,
+    fileUrl,
+  });
+
+  const result: EvalFile = {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? undefined,
+    status: row.status,
+    date: row.createdAt.toISOString(),
+    fileName: row.fileName,
+    fileType: row.fileType,
+    fileSize: row.fileSize,
+    fileUrl: row.fileUrl,
+    storageKey: row.storageKey,
   };
 
-  return NextResponse.json({ file: newEvalFile }, { status: 201 });
+  return NextResponse.json(result, { status: 201 });
 }
