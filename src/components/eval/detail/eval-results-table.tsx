@@ -121,7 +121,12 @@ export function EvalResultsTable({ results }: EvalResultsTableProps) {
 
                   <TableCell className="py-4 px-6 text-center">
                     <div className="flex items-center justify-center">
-                      {result.success ? (
+                      {result.success === null ? (
+                        <div className="flex items-center gap-1 text-gray-400">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                          <span className="text-xs">未知</span>
+                        </div>
+                      ) : result.success ? (
                         <div className="flex items-center gap-1 text-green-400">
                           <div className="w-2 h-2 bg-green-400 rounded-full" />
                           <span className="text-xs">成功</span>

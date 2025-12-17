@@ -150,14 +150,6 @@ export async function POST(request: NextRequest) {
     });
 
     const rows = dataset.rows.map((row, index) => {
-      const successValue = row.success ?? row["success"];
-      const parsedSuccess =
-        typeof successValue === "string"
-          ? ["true", "1", "yes"].includes(successValue.toLowerCase())
-          : typeof successValue === "boolean"
-            ? successValue
-            : null;
-
       const executionRaw =
         row.execution_time ?? row["execution_time"] ?? row.executionTime;
       const executionTime =
@@ -182,7 +174,7 @@ export async function POST(request: NextRequest) {
         actualOutput: actualOutputColumn
           ? (row[actualOutputColumn] ?? null)
           : null,
-        success: parsedSuccess,
+        success: null,
         metrics: null,
         executionTime: Number.isFinite(executionTime) ? executionTime : null,
         timestamp: parsedTimestamp,
