@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "lib/auth/server";
-import { evalFileRepository } from "lib/db/repository";
+import {
+  evalConfigurationRepository,
+  evalFileRepository,
+  evalResultRepository,
+} from "lib/db/repository";
+import {
+  EvaluationConfiguration,
+  EvaluationDetail,
+  EvaluationResultItem,
+} from "@/types/eval/index";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
-
-// Transform function to convert mock results to EvaluationResultItem format
-function transformLegacyResults(legacyResults: any[]): any[] {
-  return legacyResults.map((result, index) => ({
-    id: result.id,
-    input: result.input,
-    expected_output: "预期输出示例", // Add expected output for the new structure
-    actual_output: result.output,
-    success: result.success, // Keep boolean success value
-    metrics: result.metadata || {},
-    execution_time: result.totalLatency,
-    timestamp: new Date(Date.now() - index * 1000).toISOString(), // Generate timestamps
-  }));
-}
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   const session = await getSession();
@@ -28,109 +23,63 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
   const { id } = await params;
 
-  // Legacy mock data for transformation
-  const legacyResults = [
-    {
-      id: "1",
-      input: "高并发token生成测试用例",
-      output: "生成了2000个token，用时95ms",
-      totalLatency: 95,
-      success: true,
-      metadata: {
-        tokensGenerated: 2000,
-        promptTokens: 50,
-        completionTokens: 1950,
-      },
-    },
-    {
-      id: "2",
-      input: "复杂推理任务测试",
-      output: "完成了多步骤逻辑推理，用时156ms",
-      success: true,
-      totalLatency: 156,
-      metadata: {
-        reasoningSteps: 5,
-        complexity: "high",
-      },
-    },
-    {
-      id: "3",
-      input: "代码生成能力测试",
-      output: "生成了一个Python函数，用时203ms",
-      totalLatency: 203,
-      success: true,
-      metadata: {
-        linesOfCode: 15,
-        language: "python",
-      },
-    },
-    {
-      id: "4",
-      input: "长文本理解测试",
-      output: "准确理解了5000字文档内容，用时178ms",
-      totalLatency: 178,
-      success: true,
-      metadata: {
-        documentLength: 5000,
-        comprehensionAccuracy: 98,
-      },
-    },
-    {
-      id: "5",
-      input: "多语言翻译测试",
-      output: "中英日三互译，用时134ms",
-      totalLatency: 134,
-      success: true,
-      metadata: {
-        languages: ["zh", "en", "ja"],
-        translationQuality: 92,
-      },
-    },
-  ];
+  const evalFile = await evalFileRepository.findById(id);
 
-  // Transform legacy results to new format
-  const detailedResults = transformLegacyResults(legacyResults);
+  if (!evalFile || evalFile.userId !== session.user.id) {
+    return NextResponse.json(
+      { error: "Evaluation not found" },
+      { status: 404 },
+    );
+  }
 
-  // Mock detailed evaluation data with simplified structure
-  const mockEvaluationDetail = {
-    id: id,
-    title: `评估任务 ${id}`,
-    description:
-      "针对模型性能的全面评估，包含推理延迟、准确性和资源消耗等多个维度的测试",
-    status: "completed",
-    date_created: "2025-12-15T10:30:00Z",
-    date_completed: "2025-12-15T10:45:00Z",
-    configuration: {
-      model: "gpt-4-turbo",
-      parameters: {
-        temperature: 0.7,
-        maxTokens: 4096,
-      },
-      dataset_size: 5,
-      evaluation_type: "performance_test",
-      metrics: ["accuracy", "latency", "throughput"],
+  const configurationEntity = await evalConfigurationRepository.getByFileId(id);
+  const resultEntities = await evalResultRepository.listByFileId(id);
+
+  const configuration: EvaluationConfiguration | null = configurationEntity
+    ? {
+        ...configurationEntity,
+        previewRows: configurationEntity.previewRows ?? null,
+        rawConfig: configurationEntity.rawConfig ?? null,
+        createdAt: configurationEntity.createdAt.toISOString(),
+        updatedAt: configurationEntity.updatedAt.toISOString(),
+      }
+    : null;
+
+  const detailedResults: EvaluationResultItem[] = resultEntities.map(
+    (item) => ({
+      id: item.id,
+      fileId: item.fileId,
+      rowIndex: item.rowIndex,
+      input: item.input,
+      expectedOutput: item.expectedOutput,
+      actualOutput: item.actualOutput,
+      success: item.success,
+      metrics: item.metrics,
+      executionTime: item.executionTime,
+      timestamp: item.timestamp ? item.timestamp.toISOString() : null,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    }),
+  );
+
+  const evaluation: EvaluationDetail = {
+    id: evalFile.id,
+    title: evalFile.title,
+    description: evalFile.description,
+    status: evalFile.status,
+    createdAt: evalFile.createdAt.toISOString(),
+    updatedAt: evalFile.updatedAt.toISOString(),
+    configuration,
+    results: {
+      detailed_results: detailedResults,
+      total_samples: detailedResults.length,
     },
-    results: detailedResults, // Simplified: just the array
-    logs: [
-      {
-        id: "log-1",
-        timestamp: "2025-12-15T10:30:00Z",
-        level: "info",
-        message: "评估任务开始",
-        details: { model: "gpt-4-turbo", dataset_size: 5 },
-      },
-      {
-        id: "log-2",
-        timestamp: "2025-12-15T10:32:15Z",
-        level: "info",
-        message: "完成第一个测试用例",
-        details: { test_id: "1", latency: 95 },
-      },
-    ],
+    summary: null,
+    logs: null,
   };
 
   return NextResponse.json({
-    evaluation: mockEvaluationDetail,
+    evaluation,
   });
 }
 

@@ -54,6 +54,7 @@ export type EvalFileRepository = {
     total: number;
   }>;
   createEvalFile(input: EvalFileCreateInput): Promise<EvalFileEntity>;
+  findById(id: string): Promise<EvalFileEntity | null>;
   softDeleteEvalFile(params: {
     id: string;
     userId: string;

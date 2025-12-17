@@ -8,14 +8,7 @@ export type CsvPreview = {
   markdownTable: string; // simple markdown table for the chat
 };
 
-export function parseCsvPreview(
-  content: Buffer,
-  opts: { maxRows?: number; maxCols?: number } = {},
-): CsvPreview {
-  const maxRows = Math.max(1, opts.maxRows ?? 50);
-  const maxCols = Math.max(1, opts.maxCols ?? 12);
-  const text = content.toString("utf8");
-
+const parseCsvRows = (text: string, delimiter: string): string[][] => {
   const rows: string[][] = [];
   let i = 0;
   let field = "";
@@ -47,7 +40,7 @@ export function parseCsvPreview(
     } else {
       if (ch === '"') {
         inQuotes = true;
-      } else if (ch === ",") {
+      } else if (ch === delimiter) {
         pushField();
       } else if (ch === "\n") {
         pushField();
@@ -61,7 +54,20 @@ export function parseCsvPreview(
   }
   // flush last field/row
   pushField();
-  if (row.some(field => field !== "")) pushRow();
+  if (row.some((cell) => cell !== "")) pushRow();
+
+  return rows;
+};
+
+export function parseCsvPreview(
+  content: Buffer,
+  opts: { maxRows?: number; maxCols?: number } = {},
+): CsvPreview {
+  const maxRows = Math.max(1, opts.maxRows ?? 50);
+  const maxCols = Math.max(1, opts.maxCols ?? 12);
+  const text = content.toString("utf8");
+
+  const rows = parseCsvRows(text, ",");
 
   const totalRows = rows.length;
   const header = rows[0] ?? [];
@@ -90,9 +96,45 @@ export function parseCsvPreview(
   };
 }
 
+export interface ParsedCsvDataset {
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
+export async function parseCsvDataset({
+  buffer,
+  delimiter = ",",
+  encoding = "utf-8",
+}: {
+  buffer: Buffer;
+  delimiter?: string;
+  encoding?: BufferEncoding;
+}): Promise<ParsedCsvDataset> {
+  const text = buffer.toString(encoding);
+  const rows = parseCsvRows(text, delimiter);
+
+  if (rows.length === 0) {
+    return { columns: [], rows: [] };
+  }
+
+  const header = rows[0] ?? [];
+  const dataRows = rows.slice(1);
+
+  const mappedRows = dataRows.map((row) => {
+    const record: Record<string, string> = {};
+    header.forEach((col, idx) => {
+      record[col] = row[idx] ?? "";
+    });
+    return record;
+  });
+
+  return { columns: header, rows: mappedRows };
+}
+
 export const formatCsvPreviewText = (
   name: string,
   preview: CsvPreview,
 ): string => {
-  return `Here is a preview of ${name} (rows: ${preview.totalRows}, cols: ${preview.columns}). Summarize or analyze as needed.\n\n${preview.markdownTable}`;
+  return `Here is a preview of ${name} (rows: ${preview.totalRows}, cols: ${preview.columns}). Summarize or analyze as needed.\n
+${preview.markdownTable}`;
 };

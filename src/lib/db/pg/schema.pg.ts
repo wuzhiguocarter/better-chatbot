@@ -13,6 +13,8 @@ import {
   varchar,
   index,
   bigint,
+  integer,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { isNotNull } from "drizzle-orm";
 import { DBWorkflow, DBEdge, DBNode } from "app-types/workflow";
@@ -187,6 +189,59 @@ export const EvalFileTable = pgTable("eval_files", {
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const EvalConfigurationTable = pgTable(
+  "eval_configuration",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    fileId: uuid("file_id")
+      .notNull()
+      .references(() => EvalFileTable.id, { onDelete: "cascade" }),
+    columns: json("columns").notNull().$type<string[]>(),
+    totalRows: integer("total_rows").notNull(),
+    inputColumn: varchar("input_column", { length: 255 })
+      .notNull()
+      .default("input"),
+    expectedOutputColumn: varchar("expected_output_column", { length: 255 }),
+    actualOutputColumn: varchar("actual_output_column", { length: 255 }),
+    previewRows: json("preview_rows").$type<Record<string, any>[]>(),
+    rawConfig: json("raw_config").$type<Record<string, any>>(),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("eval_configuration_file_id_idx").on(table.fileId)],
+);
+
+export const EvalResultItemTable = pgTable(
+  "eval_result_items",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    fileId: uuid("file_id")
+      .notNull()
+      .references(() => EvalFileTable.id, { onDelete: "cascade" }),
+    rowIndex: integer("row_index").notNull(),
+    input: text("input").notNull(),
+    expectedOutput: text("expected_output"),
+    actualOutput: text("actual_output"),
+    success: boolean("success"),
+    metrics: json("metrics"),
+    executionTime: doublePrecision("execution_time"),
+    timestamp: timestamp("timestamp"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("eval_result_items_file_row_idx").on(table.fileId, table.rowIndex),
+  ],
+);
 
 export const VerificationTable = pgTable("verification", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -414,3 +469,6 @@ export const ChatExportCommentTable = pgTable("chat_export_comment", {
 export type ArchiveEntity = typeof ArchiveTable.$inferSelect;
 export type ArchiveItemEntity = typeof ArchiveItemTable.$inferSelect;
 export type BookmarkEntity = typeof BookmarkTable.$inferSelect;
+export type EvalConfigurationEntity =
+  typeof EvalConfigurationTable.$inferSelect;
+export type EvalResultItemEntity = typeof EvalResultItemTable.$inferSelect;

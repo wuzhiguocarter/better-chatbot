@@ -11,6 +11,8 @@ import { pgBookmarkRepository } from "./pg/repositories/bookmark-repository.pg";
 import { pgChatExportRepository } from "./pg/repositories/chat-export-repository.pg";
 import { pgEvalTaskChatRepository } from "./pg/repositories/eval-task-chat-repository.pg";
 import { pgEvalFileRepository } from "./pg/repositories/eval-file-repository.pg";
+import { pgEvalConfigurationRepository } from "./pg/repositories/eval-configuration-repository.pg";
+import { pgEvalResultRepository } from "./pg/repositories/eval-result-repository.pg";
 
 export const chatRepository = pgChatRepository;
 export const evalTaskChatRepository = pgEvalTaskChatRepository;
@@ -28,3 +30,5 @@ export const archiveRepository = pgArchiveRepository;
 export const bookmarkRepository = pgBookmarkRepository;
 export const chatExportRepository = pgChatExportRepository;
 export const evalFileRepository = pgEvalFileRepository;
+export const evalConfigurationRepository = pgEvalConfigurationRepository;
+export const evalResultRepository = pgEvalResultRepository;

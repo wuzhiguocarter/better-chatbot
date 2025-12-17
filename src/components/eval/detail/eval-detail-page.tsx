@@ -111,7 +111,7 @@ export function EvalDetailPageClient({
         <EvalDetailHeader
           title={evaluation.title}
           status={evaluation.status}
-          date={evaluation.date_created}
+          date={evaluation.createdAt}
         />
 
         {/* Info Cards */}
