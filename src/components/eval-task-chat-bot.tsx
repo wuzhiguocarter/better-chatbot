@@ -2,7 +2,7 @@
 
 import { appStore } from "@/app/store";
 import PromptInput from "@/components/prompt-input";
-import { useGenerateThreadTitle } from "@/hooks/queries/use-generate-thread-title";
+import { useEvalTaskGenerateThreadTitle } from "@/hooks/queries/use-generate-eval-task-thread-title";
 import { useToRef } from "@/hooks/use-latest";
 import { useChat } from "@ai-sdk/react";
 import {
@@ -54,7 +54,7 @@ export function EvalTaskChatBot({ threadId, initialMessages }: Props) {
     ]),
   );
 
-  const generateTitle = useGenerateThreadTitle({
+  const generateTitle = useEvalTaskGenerateThreadTitle({
     threadId,
   });
 
