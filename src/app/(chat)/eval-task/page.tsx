@@ -1,20 +1,24 @@
-import { EvalTaskChatBot } from "@/components/eval-task-chat-bot";
-import { generateUUID } from "lib/utils";
-import { getSession } from "auth/server";
 import { redirect } from "next/navigation";
+import { getSession } from "auth/server";
+import { generateUUID } from "lib/utils";
+import { EvalTaskChatBot } from "@/components/eval-task-chat-bot";
 
 export const dynamic = "force-dynamic";
 
 export default async function EvalTaskPage() {
   const session = await getSession();
-  if (!session) {
-    redirect("/sign-in");
+  if (!session?.user) {
+    redirect("/login");
   }
-  const id = generateUUID();
+  const threadId = generateUUID();
 
   return (
     <div className="flex h-full w-full flex-col">
-      <EvalTaskChatBot initialMessages={[]} threadId={id} key={id} />
+      <EvalTaskChatBot
+        key={threadId}
+        threadId={threadId}
+        initialMessages={[]}
+      />
     </div>
   );
 }
