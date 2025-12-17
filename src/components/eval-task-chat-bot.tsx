@@ -3,7 +3,6 @@
 import { appStore } from "@/app/store";
 import PromptInput from "@/components/prompt-input";
 import { useEvalTaskGenerateThreadTitle } from "@/hooks/queries/use-generate-eval-task-thread-title";
-import { useEvalTaskThreadList } from "@/hooks/queries/use-eval-task-thread-list";
 import { useToRef } from "@/hooks/use-latest";
 import { useChat } from "@ai-sdk/react";
 import {
@@ -22,7 +21,6 @@ import { generateUUID, truncateString } from "lib/utils";
 import { useShallow } from "zustand/shallow";
 import { ErrorMessage, PreviewMessage } from "./message";
 import { toast } from "sonner";
-import { mutate } from "swr";
 
 type Props = {
   threadId: string;
@@ -31,7 +29,6 @@ type Props = {
   toolChoice?: any;
   allowedAppDefaultToolkit?: string[];
   allowedMcpServers?: Record<string, any>;
-  threadList?: any[];
   threadMentions?: Record<string, any[]>;
   threadImageToolModel?: Record<string, any>;
 };
@@ -43,34 +40,26 @@ export function EvalTaskChatBot({
   toolChoice,
   allowedAppDefaultToolkit,
   allowedMcpServers,
-  threadList,
   threadMentions,
   threadImageToolModel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
-  // 主动获取评估任务线程列表
-  useEvalTaskThreadList();
-
   // Get values from app store as fallback if not provided as props
   const [
-    _appStoreMutate,
     appStoreModel,
     appStoreToolChoice,
     appStoreAllowedAppDefaultToolkit,
     appStoreAllowedMcpServers,
-    appStoreThreadList,
     appStoreThreadMentions,
     appStoreThreadImageToolModel,
   ] = appStore(
     useShallow((state) => [
-      state.mutate,
       state.chatModel,
       state.toolChoice,
       state.allowedAppDefaultToolkit,
       state.allowedMcpServers,
-      state.threadList,
       state.threadMentions,
       state.threadImageToolModel,
     ]),
@@ -82,16 +71,18 @@ export function EvalTaskChatBot({
   const finalAllowedAppDefaultToolkit =
     allowedAppDefaultToolkit ?? appStoreAllowedAppDefaultToolkit;
   const finalAllowedMcpServers = allowedMcpServers ?? appStoreAllowedMcpServers;
-  const finalThreadList = threadList ?? appStoreThreadList;
   const finalThreadMentions = threadMentions ?? appStoreThreadMentions;
   const finalThreadImageToolModel =
     threadImageToolModel ?? appStoreThreadImageToolModel;
 
-  const generateTitle = useEvalTaskGenerateThreadTitle({
+  const { generateTitle } = useEvalTaskGenerateThreadTitle({
     threadId,
   });
 
   const mentions = finalThreadMentions[threadId] ?? [];
+
+  const isNewThread = initialMessages.length === 0;
+  const hasGeneratedTitleRef = useRef(!isNewThread);
 
   const latestRef = useToRef({
     model: finalModel,
@@ -100,39 +91,39 @@ export function EvalTaskChatBot({
     allowedMcpServers: finalAllowedMcpServers,
     mentions,
     threadImageToolModel: finalThreadImageToolModel,
-    threadList: finalThreadList,
     messages: initialMessages,
   });
 
   const onFinish = useCallback(() => {
     const messages = latestRef.current.messages;
-    const prevThread = latestRef.current.threadList.find(
-      (v) => v.id === threadId,
+
+    if (!isNewThread || hasGeneratedTitleRef.current) {
+      return;
+    }
+
+    const conversationalMessages = messages.filter(
+      (v) => v.role === "user" || v.role === "assistant",
     );
 
-    const isNewThread =
-      !prevThread?.title &&
-      messages.filter((v) => v.role === "user" || v.role === "assistant")
-        .length < 3;
-
-    if (isNewThread) {
-      const part = messages
-        .slice(0, 2)
-        .flatMap((m) =>
-          m.parts
-            .filter((v) => v.type === "text")
-            .map(
-              (p) =>
-                `${m.role}: ${truncateString((p as TextUIPart).text, 500)}`,
-            ),
-        );
-      if (part.length > 0) {
-        generateTitle(part.join("\n\n"));
-      }
-    } else if (latestRef.current.threadList[0]?.id !== threadId) {
-      mutate("/api/eval/task_thread");
+    if (conversationalMessages.length < 2) {
+      return;
     }
-  }, [threadId, generateTitle, latestRef]);
+
+    const part = conversationalMessages
+      .slice(0, 2)
+      .flatMap((m) =>
+        m.parts
+          .filter((v) => v.type === "text")
+          .map(
+            (p) => `${m.role}: ${truncateString((p as TextUIPart).text, 500)}`,
+          ),
+      );
+
+    if (part.length > 0) {
+      hasGeneratedTitleRef.current = true;
+      generateTitle(part.join("\n\n"));
+    }
+  }, [generateTitle, isNewThread, latestRef]);
 
   const {
     messages,
@@ -219,8 +210,7 @@ export function EvalTaskChatBot({
 
   useEffect(() => {
     latestRef.current.messages = messages;
-    latestRef.current.threadList = threadList;
-  }, [messages, threadList, latestRef]);
+  }, [messages, latestRef]);
 
   const addToolResult = useCallback(
     async (result: Parameters<typeof _addToolResult>[0]) => {

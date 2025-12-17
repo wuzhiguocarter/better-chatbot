@@ -3,81 +3,62 @@
 import { appStore } from "@/app/store";
 import { useCompletion } from "@ai-sdk/react";
 import { ChatModel } from "app-types/chat";
-import { useCallback, useEffect } from "react";
-import { mutate } from "swr";
-import { safe } from "ts-safe";
+import { useCallback } from "react";
+import { mutate as swrMutate } from "swr";
+import { useShallow } from "zustand/shallow";
 
-export function useEvalTaskGenerateThreadTitle(option: {
+type UseEvalTaskGenerateThreadTitleOptions = {
   threadId: string;
   chatModel?: ChatModel;
-}) {
-  const { complete, completion } = useCompletion({
-    api: "/api/chat/title",
+};
+
+export function useEvalTaskGenerateThreadTitle(
+  options: UseEvalTaskGenerateThreadTitleOptions,
+) {
+  const [storeMutate, appStoreChatModel] = appStore(
+    useShallow((state) => [state.mutate, state.chatModel]),
+  );
+
+  const finalModel = options.chatModel ?? appStoreChatModel;
+  const { threadId } = options;
+
+  const { complete, isLoading } = useCompletion({
+    api: "/api/eval/task_chat/title",
   });
 
-  const updateTitle = useCallback(
-    (title: string) => {
-      appStore.setState((prev) => {
-        if (prev.threadList.some((v) => v.id !== option.threadId)) {
-          return {
-            threadList: [
-              {
-                id: option.threadId,
-                title,
-                userId: "",
-                createdAt: new Date(),
-              },
-              ...prev.threadList,
-            ],
-          };
-        }
-
-        return {
-          threadList: prev.threadList.map((v) =>
-            v.id === option.threadId ? { ...v, title } : v,
-          ),
-        };
-      });
-    },
-    [option.threadId, option.chatModel?.model, option.chatModel?.provider],
-  );
-
   const generateTitle = useCallback(
-    (message: string) => {
-      const { threadId, chatModel } = option;
-      if (appStore.getState().generatingTitleThreadIds.includes(threadId))
-        return;
-      appStore.setState((prev) => ({
-        generatingTitleThreadIds: [...prev.generatingTitleThreadIds, threadId],
+    async (message: string) => {
+      if (!threadId) return;
+
+      storeMutate((prev) => ({
+        generatingEvalTaskTitleThreadIds: Array.from(
+          new Set([...prev.generatingEvalTaskTitleThreadIds, threadId]),
+        ),
       }));
-      safe(() => {
-        updateTitle("");
-        return complete("", {
+
+      try {
+        await complete(message, {
           body: {
-            message,
+            chatModel: finalModel,
             threadId,
-            chatModel: chatModel ?? appStore.getState().chatModel,
           },
         });
-      })
-        .ifOk(() => mutate("/api/eval/task_thread"))
-        .watch(() => {
-          appStore.setState((prev) => ({
-            generatingTitleThreadIds: prev.generatingTitleThreadIds.filter(
-              (v) => v !== threadId,
+
+        swrMutate("/api/eval/task_thread");
+      } finally {
+        storeMutate((prev) => ({
+          generatingEvalTaskTitleThreadIds:
+            prev.generatingEvalTaskTitleThreadIds.filter(
+              (id) => id !== threadId,
             ),
-          }));
-        });
+        }));
+      }
     },
-    [updateTitle],
+    [threadId, storeMutate, complete, finalModel],
   );
 
-  useEffect(() => {
-    const title = completion.trim();
-    if (title) {
-      updateTitle(title);
-    }
-  }, [completion, updateTitle]);
-
-  return generateTitle;
+  return {
+    generateTitle,
+    isLoading,
+  };
 }
