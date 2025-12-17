@@ -31,6 +31,7 @@ export interface AppState {
   allowedMcpServers?: Record<string, AllowedMCPServer>;
   allowedAppDefaultToolkit?: AppDefaultToolkit[];
   generatingTitleThreadIds: string[];
+  generatingEvalTaskTitleThreadIds: string[];
   archiveList: ArchiveWithItemCount[];
   threadMentions: {
     [threadId: string]: ChatMention[];
@@ -75,6 +76,7 @@ const initialState: AppState = {
   threadList: [],
   archiveList: [],
   generatingTitleThreadIds: [],
+  generatingEvalTaskTitleThreadIds: [],
   threadMentions: {},
   threadFiles: {},
   threadImageToolModel: {},
