@@ -59,4 +59,5 @@ export type EvalFileRepository = {
     id: string;
     userId: string;
   }): Promise<EvalFileEntity | null>;
+  updateStatus(params: { id: string; status: EvalFileStatus }): Promise<void>;
 };

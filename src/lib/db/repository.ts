@@ -13,6 +13,7 @@ import { pgEvalTaskChatRepository } from "./pg/repositories/eval-task-chat-repos
 import { pgEvalFileRepository } from "./pg/repositories/eval-file-repository.pg";
 import { pgEvalConfigurationRepository } from "./pg/repositories/eval-configuration-repository.pg";
 import { pgEvalResultRepository } from "./pg/repositories/eval-result-repository.pg";
+import { pgSessionRepository } from "./pg/repositories/session-repository.pg";
 
 export const chatRepository = pgChatRepository;
 export const evalTaskChatRepository = pgEvalTaskChatRepository;
@@ -32,3 +33,4 @@ export const chatExportRepository = pgChatExportRepository;
 export const evalFileRepository = pgEvalFileRepository;
 export const evalConfigurationRepository = pgEvalConfigurationRepository;
 export const evalResultRepository = pgEvalResultRepository;
+export const sessionRepository = pgSessionRepository;

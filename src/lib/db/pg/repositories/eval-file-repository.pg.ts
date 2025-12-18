@@ -3,6 +3,7 @@ import {
   EvalFileEntity,
   EvalFileListQuery,
   EvalFileRepository,
+  EvalFileStatus,
 } from "app-types/eval";
 import { pgDb as db } from "../db.pg";
 import { EvalFileTable } from "../schema.pg";
@@ -95,5 +96,12 @@ export const pgEvalFileRepository: EvalFileRepository = {
       .returning();
 
     return (row ?? null) as EvalFileEntity | null;
+  },
+
+  async updateStatus({ id, status }: { id: string; status: EvalFileStatus }) {
+    await db
+      .update(EvalFileTable)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(EvalFileTable.id, id));
   },
 };

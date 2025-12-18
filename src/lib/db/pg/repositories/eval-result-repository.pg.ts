@@ -1,6 +1,7 @@
 import {
   EvaluationResultItemCreateInput,
   EvaluationResultItemEntity,
+  EvaluationMetrics,
 } from "app-types/eval/index";
 import { asc, eq } from "drizzle-orm";
 import { pgDb as db } from "../db.pg";
@@ -35,9 +36,28 @@ async function listByFileId(
   return results as EvaluationResultItemEntity[];
 }
 
+async function updateById(
+  id: string,
+  data: Partial<{
+    actualOutput: string | null;
+    success: boolean | null;
+    metrics: EvaluationMetrics | null;
+    executionTime: number | null;
+  }>,
+): Promise<void> {
+  await db
+    .update(EvalResultItemTable)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(EvalResultItemTable.id, id));
+}
+
 export const pgEvalResultRepository = {
   insertMany,
   listByFileId,
+  updateById,
 };
 
 export default pgEvalResultRepository;
