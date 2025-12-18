@@ -11,10 +11,10 @@ import {
   evalConfigurationRepository,
   evalFileRepository,
   evalResultRepository,
-  sessionRepository,
 } from "lib/db/repository";
 import { generateUUID } from "lib/utils";
 import logger from "logger";
+import { headers } from "next/headers";
 
 export async function startEvalJobInBackground(params: {
   fileId: string;
@@ -30,13 +30,7 @@ async function runEvalJob({
   userId,
 }: { fileId: string; userId: string }) {
   try {
-    const sessionToken =
-      await sessionRepository.getLatestSessionTokenByUserId(userId);
-
-    if (!sessionToken) {
-      await evalFileRepository.updateStatus({ id: fileId, status: "failed" });
-      throw new Error(`No session token found for user ${userId}`);
-    }
+    const h = await headers();
 
     const configuration = await evalConfigurationRepository.getByFileId(fileId);
 
@@ -78,7 +72,7 @@ async function runEvalJob({
         const { output, usage } = await runSingleEvaluation({
           baseUrl,
           body,
-          sessionToken,
+          sessionToken: h.get("cookie") ?? "",
           userId,
         });
 
@@ -140,7 +134,7 @@ async function runSingleEvaluation(params: {
     headers: {
       "Content-Type": "application/json",
       "x-eval-user": userId,
-      cookie: `better-auth.session_token=${sessionToken}`,
+      cookie: sessionToken,
     },
     body: JSON.stringify(body),
   });
@@ -211,6 +205,17 @@ async function readEvalStream(response: Response) {
   } = {};
   let buffer = "";
 
+  // {"type":"start","messageId":"18483285-8068-4c66-99ed-80613760f44c"}
+  // {"type":"start-step"}
+  // {"type":"reasoning-start","id":"reasoning-0"}
+  // {"type":"reasoning-delta","id":"reasoning-0","delta":"\n"}
+  // {"type":"text-start","id":"txt-0"}
+  // {"type":"text-delta","id":"txt-0","delta":"你好，dmeck！有什么我可以帮助你的吗？"}
+  // {"type":"reasoning-end","id":"reasoning-0"}
+  // {"type":"text-end","id":"txt-0"}
+  // {"type":"finish-step"}
+  // {"type":"finish","finishReason":"stop","messageMetadata":{"toolChoice":"auto","toolCount":6,"chatModel":{"provider":"openroute","model":"tngtech/deepseek-r1t2-chimera:free"},"usage":{"inputTokens":1639,"outputTokens":95,"totalTokens":1734,"reasoningTokens":144,"cachedInputTokens":3}}}
+  // [DONE]
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -253,31 +258,9 @@ async function readEvalStream(response: Response) {
 function extractTextFromStreamPayload(payload: any): string {
   if (!payload) return "";
 
-  if (typeof payload.text === "string") {
-    return payload.text;
-  }
-
-  if (typeof payload.delta === "string") {
+  // Only extract text from "text-delta" type messages
+  if (payload.type === "text-delta" && typeof payload.delta === "string") {
     return payload.delta;
-  }
-
-  if (typeof payload?.delta?.text === "string") {
-    return payload.delta.text;
-  }
-
-  const message =
-    payload.message || payload.responseMessage || payload.response?.message;
-
-  if (message?.parts) {
-    return message.parts
-      .map((part: any) => (part?.type === "text" ? (part.text ?? "") : ""))
-      .join("");
-  }
-
-  if (Array.isArray(payload.parts)) {
-    return payload.parts
-      .map((part: any) => (part?.type === "text" ? (part.text ?? "") : ""))
-      .join("");
   }
 
   return "";
@@ -286,8 +269,17 @@ function extractTextFromStreamPayload(payload: any): string {
 function extractUsageFromStreamPayload(payload: any) {
   if (!payload) return undefined;
 
-  if (payload.usage) return payload.usage;
-  if (payload.response?.usage) return payload.response.usage;
+  // Handle finish type chunks with usage in messageMetadata
+  if (payload.type === "finish" && payload.messageMetadata?.usage) {
+    const usage = payload.messageMetadata.usage;
+    return {
+      promptTokens: usage.inputTokens,
+      completionTokens: usage.outputTokens,
+      totalTokens: usage.totalTokens,
+      reasoningTokens: usage.reasoningTokens,
+      cachedInputTokens: usage.cachedInputTokens,
+    };
+  }
 
   return undefined;
 }
