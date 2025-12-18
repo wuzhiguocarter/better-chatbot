@@ -21,6 +21,8 @@ import { useTranslations } from "next-intl";
 import { TextShimmer } from "ui/text-shimmer";
 import { buildReturnUrl } from "lib/admin/navigation-utils";
 import { BackButton } from "@/components/layouts/back-button";
+import { EvalTaskBackButton } from "@/components/eval/eval-task-back-button";
+import { EvalDetailHeaderComponent } from "@/components/eval/detail/eval-detail-header-component";
 
 export function AppHeader() {
   const t = useTranslations();
@@ -39,6 +41,17 @@ export function AppHeader() {
   const componentByPage = useMemo(() => {
     if (currentPaths.startsWith("/chat/")) {
       return <ThreadDropdownComponent />;
+    }
+    if (currentPaths.startsWith("/eval-task")) {
+      return <EvalTaskBackButton />;
+    }
+    // 新增：Eval 详情页面支持
+    if (
+      currentPaths.startsWith("/eval/") &&
+      currentPaths.split("/").length === 3
+    ) {
+      const evaluationId = currentPaths.split("/")[2];
+      return <EvalDetailHeaderComponent evaluationId={evaluationId} />;
     }
     if (
       currentPaths.startsWith("/admin/users/") &&

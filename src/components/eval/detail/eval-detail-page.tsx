@@ -4,7 +4,6 @@ import useSWR from "swr";
 import { useTranslations } from "next-intl";
 import { fetcher } from "lib/utils";
 import { EvaluationDetail } from "@/types/eval/index";
-import { EvalDetailHeader } from "./eval-detail-header";
 import { EvalInfoCards } from "./eval-info-cards";
 import { EvalDetailTable } from "./eval-detail-table";
 import { Skeleton } from "ui/skeleton";
@@ -84,7 +83,9 @@ export function EvalDetailPageClient({
     return (
       <main className="flex-1 bg-background min-h-screen text-foreground">
         <div className="w-full flex flex-col gap-4 p-8">
-          <EvalDetailHeader title={t("detail.loadFailed")} />
+          <div className="text-2xl font-bold text-foreground font-serif">
+            {t("detail.loadFailed")}
+          </div>
           <Card className="bg-card border border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 text-destructive-foreground">
@@ -107,13 +108,6 @@ export function EvalDetailPageClient({
   return (
     <main className="flex-1 bg-background min-h-screen text-foreground">
       <div className="w-full flex flex-col gap-4 p-8">
-        {/* Page Header */}
-        <EvalDetailHeader
-          title={evaluation.title}
-          status={evaluation.status}
-          date={evaluation.createdAt}
-        />
-
         {/* Info Cards */}
         <EvalInfoCards evaluation={evaluation} />
 
@@ -134,23 +128,6 @@ function EvalDetailPageSkeleton() {
   return (
     <main className="flex-1 bg-background min-h-screen text-foreground">
       <div className="w-full flex flex-col gap-4 p-8">
-        {/* Header Skeleton */}
-        <div className="flex items-center gap-4 mb-4">
-          <Skeleton className="h-10 w-10 bg-muted rounded" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-4 w-16 bg-muted" />
-            <Skeleton className="h-4 w-4 bg-muted" />
-            <Skeleton className="h-4 w-12 bg-muted" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-96 bg-muted" />
-          <Skeleton className="h-6 w-20 bg-muted rounded-full" />
-          <div className="flex-1" />
-          <Skeleton className="h-4 w-32 bg-muted" />
-        </div>
-
         {/* Info Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, index) => (

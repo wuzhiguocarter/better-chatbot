@@ -843,7 +843,8 @@
       "completedAt": "Completed At",
       "totalExecutionTime": "Total Execution Time",
       "totalExecutionTimeDescription": "Total time for all test cases",
-      "resultsCount": "Total {count} evaluation results, including input, output, latency and other details"
+      "resultsCount": "Total {count} evaluation results, including input, output, latency and other details",
+      "backToEvaluations": "Back to Evaluations"
     },
     "table": {
       "number": "Number",
@@ -879,6 +880,10 @@
       "header": "Header Skeleton",
       "infoCards": "Info Cards Skeleton",
       "resultsTable": "Results Table Skeleton"
+    },
+    "task": {
+      "pageTitle": "Evaluation Task",
+      "backToPrevious": "Back to previous page"
     }
   }
 }
