@@ -102,7 +102,31 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   const { id } = await params;
   const json = await request.json();
-  const { action, configuration, chatConfig } = EvalPatchSchema.parse(json);
+
+  // Add defensive checks for schema parsing
+  if (!EvalPatchSchema) {
+    console.error("[PATCH /api/eval/:id] EvalPatchSchema is undefined");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 },
+    );
+  }
+
+  let parsedData: z.infer<typeof EvalPatchSchema>;
+  try {
+    parsedData = EvalPatchSchema.parse(json);
+  } catch (error) {
+    console.error("[PATCH /api/eval/:id] Schema validation error:", error);
+    return NextResponse.json(
+      {
+        error: "Invalid request data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 400 },
+    );
+  }
+
+  const { action, configuration, chatConfig } = parsedData;
 
   const evalFile = await evalFileRepository.findById(id);
 

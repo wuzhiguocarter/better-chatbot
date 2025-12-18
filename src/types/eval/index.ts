@@ -128,8 +128,8 @@ export const EvaluationConfigurationZod = z.object({
   inputColumn: z.string(),
   expectedOutputColumn: z.string().nullable().optional(),
   actualOutputColumn: z.string().nullable().optional(),
-  previewRows: z.array(z.record(z.any())).nullable().optional(),
-  rawConfig: z.record(z.any()).nullable().optional(),
+  previewRows: z.array(z.record(z.string(), z.any())).nullable().optional(),
+  rawConfig: z.record(z.string(), z.any()).nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
