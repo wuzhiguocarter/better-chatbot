@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import {
   ArrowDownUp,
   Download,
@@ -89,6 +90,7 @@ export function EvalDetailTable({
   results,
 }: EvalDetailTableProps) {
   const t = useTranslations("Eval");
+  const router = useRouter();
   const displayTitle = title || t("table.resultsTitle");
 
   // Column configuration
@@ -333,8 +335,7 @@ export function EvalDetailTable({
 
   // Handle view process action
   const handleViewProcess = (resultId: string) => {
-    // TODO: Implement view process logic
-    console.log("View process:", resultId);
+    router.push(`/eval-task/${resultId}`);
   };
 
   const visibleColumnsArray = columns.filter((col) =>
