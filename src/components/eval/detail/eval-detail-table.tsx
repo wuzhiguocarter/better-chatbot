@@ -343,7 +343,7 @@ export function EvalDetailTable({
   );
 
   return (
-    <div className="px-6">
+    <div className="w-full">
       <Card className="w-full px-0 bg-card border border-border">
         <CardHeader>
           <CardTitle className="text-primary font-serif flex items-center gap-2">
@@ -439,182 +439,189 @@ export function EvalDetailTable({
         </CardHeader>
 
         <CardContent className="px-0 relative">
-          <Table className="border-separate border-spacing-y-1">
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                {visibleColumnsArray.map((column, index) => {
-                  return (
-                    <TableHead
-                      key={column.key}
-                      className={cn(
-                        "text-primary font-semibold py-4",
-                        index === 0
-                          ? "pl-6"
-                          : index === visibleColumnsArray.length - 1
-                            ? "pr-6"
-                            : "",
-                        column.type === "number" ||
-                          column.type === "date" ||
-                          column.type === "boolean"
-                          ? "text-center"
-                          : "",
-                      )}
-                    >
-                      {/* Column header with sorting */}
-                      <div
+          <div className="w-full overflow-x-auto">
+            <Table className="border-separate border-spacing-y-1 min-w-[800px]">
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  {visibleColumnsArray.map((column, index) => {
+                    return (
+                      <TableHead
+                        key={column.key}
                         className={cn(
-                          "flex items-center gap-2 cursor-pointer hover:text-foreground",
-                          column.type === "number" || column.type === "date"
-                            ? "justify-center"
+                          "text-primary font-semibold py-4",
+                          index === 0
+                            ? "pl-6"
+                            : index === visibleColumnsArray.length - 1
+                              ? "pr-6"
+                              : "",
+                          column.type === "number" ||
+                            column.type === "date" ||
+                            column.type === "boolean"
+                            ? "text-center"
                             : "",
                         )}
-                        onClick={() => handleSort(column.key)}
                       >
-                        <span>{column.label}</span>
-
-                        <ArrowDownUp
+                        {/* Column header with sorting */}
+                        <div
                           className={cn(
-                            "h-3 w-3",
-                            sortColumn === column.key ? "" : "text-primary/50",
-                          )}
-                        />
-                      </div>
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            </TableHeader>
-
-            <TableBody className="min-h-[24rem]">
-              {paginatedData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={visibleColumnsArray.length}
-                    className="text-center h-48 text-zinc-400"
-                  >
-                    {searchTerm
-                      ? t("table.noResultsFound")
-                      : t("detail.noResults")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedData.map((row) => {
-                  return (
-                    <TableRow
-                      key={row.id}
-                      className={cn(
-                        "border-border bg-card hover:bg-accent/50 transition-colors duration-200",
-                      )}
-                    >
-                      {visibleColumnsArray.map((column, index) => (
-                        <TableCell
-                          key={column.key}
-                          className={cn(
-                            "py-4",
-                            index === 0
-                              ? "pl-6"
-                              : index === visibleColumnsArray.length - 1
-                                ? "pr-6"
-                                : "",
+                            "flex items-center gap-2 cursor-pointer hover:text-foreground",
                             column.type === "number" || column.type === "date"
-                              ? "text-center"
-                              : column.type === "boolean"
-                                ? "flex items-center justify-center"
-                                : "",
+                              ? "justify-center"
+                              : "",
                           )}
+                          onClick={() => handleSort(column.key)}
                         >
-                          {column.key === "index" ? (
-                            <div className="flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-mono">
-                                {row[column.key]}
-                              </span>
-                              <span className="font-mono text-zinc-400 text-xs">
-                                #{row.id}
-                              </span>
-                            </div>
-                          ) : column.key === "success" ? (
-                            row[column.key] ? (
-                              <div className="flex items-center justify-center gap-1 text-green-400">
-                                <div className="w-2 h-2 bg-green-400 rounded-full" />
-                                <span className="text-xs">
-                                  {t("table.success")}
+                          <span>{column.label}</span>
+
+                          <ArrowDownUp
+                            className={cn(
+                              "h-3 w-3",
+                              sortColumn === column.key
+                                ? ""
+                                : "text-primary/50",
+                            )}
+                          />
+                        </div>
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              </TableHeader>
+
+              <TableBody className="min-h-[24rem]">
+                {paginatedData.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={visibleColumnsArray.length}
+                      className="text-center h-48 text-zinc-400"
+                    >
+                      {searchTerm
+                        ? t("table.noResultsFound")
+                        : t("detail.noResults")}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedData.map((row) => {
+                    return (
+                      <TableRow
+                        key={row.id}
+                        className={cn(
+                          "border-border bg-card hover:bg-accent/50 transition-colors duration-200",
+                        )}
+                      >
+                        {visibleColumnsArray.map((column, index) => (
+                          <TableCell
+                            key={column.key}
+                            className={cn(
+                              "py-4",
+                              index === 0
+                                ? "pl-6"
+                                : index === visibleColumnsArray.length - 1
+                                  ? "pr-6"
+                                  : "",
+                              column.type === "number" || column.type === "date"
+                                ? "text-center"
+                                : column.type === "boolean"
+                                  ? "flex items-center justify-center"
+                                  : "",
+                            )}
+                          >
+                            {column.key === "index" ? (
+                              <div className="flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-mono">
+                                  {row[column.key]}
+                                </span>
+                                <span className="font-mono text-zinc-400 text-xs">
+                                  #{row.id}
                                 </span>
                               </div>
-                            ) : (
-                              <div className="flex items-center justify-center gap-1 text-red-400">
-                                <div className="w-2 h-2 bg-red-400 rounded-full" />
-                                <span className="text-xs">
-                                  {t("table.failed")}
-                                </span>
-                              </div>
-                            )
-                          ) : column.key === "actions" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewProcess(row.id)}
-                              className="text-primary hover:text-primary hover:bg-accent"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              {t("table.viewProcess")}
-                            </Button>
-                          ) : column.key === "input" ||
-                            column.key === "actualOutput" ? (
-                            <div className="max-w-md">
-                              <p className="text-zinc-200 text-sm line-clamp-2">
-                                {searchTerm && searchable
-                                  ? highlightText(
-                                      formatCellValue(
+                            ) : column.key === "success" ? (
+                              row[column.key] ? (
+                                <div className="flex items-center justify-center gap-1 text-green-400">
+                                  <div className="w-2 h-2 bg-green-400 rounded-full" />
+                                  <span className="text-xs">
+                                    {t("table.success")}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center gap-1 text-red-400">
+                                  <div className="w-2 h-2 bg-red-400 rounded-full" />
+                                  <span className="text-xs">
+                                    {t("table.failed")}
+                                  </span>
+                                </div>
+                              )
+                            ) : column.key === "actions" ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewProcess(row.id)}
+                                className="text-primary hover:text-primary hover:bg-accent"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                {t("table.viewProcess")}
+                              </Button>
+                            ) : column.key === "input" ||
+                              column.key === "actualOutput" ? (
+                              <div className="max-w-md">
+                                <p className="text-zinc-200 text-sm line-clamp-2">
+                                  {searchTerm && searchable
+                                    ? highlightText(
+                                        formatCellValue(
+                                          row[column.key],
+                                          column.type,
+                                        ),
+                                        searchTerm,
+                                      )
+                                    : formatCellValue(
                                         row[column.key],
                                         column.type,
-                                      ),
-                                      searchTerm,
-                                    )
-                                  : formatCellValue(
-                                      row[column.key],
-                                      column.type,
-                                    )}
-                              </p>
-                              {row.metrics && column.key === "input" && (
-                                <div className="flex gap-2 mt-1">
-                                  {Object.entries(row.metrics)
-                                    .slice(0, 2)
-                                    .map(([key, value]) => (
-                                      <span
-                                        key={key}
-                                        className="text-xs px-2 py-1 bg-secondary text-secondary-foreground rounded"
-                                      >
-                                        {key}: {String(value)}
-                                      </span>
-                                    ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : column.key === "executionTime" ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <span className="text-primary font-mono font-semibold">
-                                {formatCellValue(row[column.key], column.type)}
-                              </span>
-                              <span className="text-primary/60 text-xs">
-                                ms
-                              </span>
-                            </div>
-                          ) : searchTerm && searchable ? (
-                            highlightText(
-                              formatCellValue(row[column.key], column.type),
-                              searchTerm,
-                            )
-                          ) : (
-                            formatCellValue(row[column.key], column.type)
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                                      )}
+                                </p>
+                                {row.metrics && column.key === "input" && (
+                                  <div className="flex gap-2 mt-1">
+                                    {Object.entries(row.metrics)
+                                      .slice(0, 2)
+                                      .map(([key, value]) => (
+                                        <span
+                                          key={key}
+                                          className="text-xs px-2 py-1 bg-secondary text-secondary-foreground rounded"
+                                        >
+                                          {key}: {String(value)}
+                                        </span>
+                                      ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : column.key === "executionTime" ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <span className="text-primary font-mono font-semibold">
+                                  {formatCellValue(
+                                    row[column.key],
+                                    column.type,
+                                  )}
+                                </span>
+                                <span className="text-primary/60 text-xs">
+                                  ms
+                                </span>
+                              </div>
+                            ) : searchTerm && searchable ? (
+                              highlightText(
+                                formatCellValue(row[column.key], column.type),
+                                searchTerm,
+                              )
+                            ) : (
+                              formatCellValue(row[column.key], column.type)
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination */}
           <div className="flex items-center justify-between pt-4 px-6">
