@@ -5,10 +5,18 @@ import { selectEvalTaskChatThreadWithMessagesAction } from "@/app/api/eval/task_
 
 interface PageProps {
   params: Promise<{ thread: string }>;
+  searchParams: Promise<{ showPromptInput?: string }>;
 }
 
-export default async function EvalTaskChatPage({ params }: PageProps) {
+export default async function EvalTaskChatPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { thread: threadId } = await params;
+  const { showPromptInput } = await searchParams;
+
+  // Parse the showPromptInput parameter - default to true if not provided
+  const showPromptInputComponent = showPromptInput !== "false";
 
   const session = await getSession();
   if (!session?.user?.id) {
@@ -26,6 +34,7 @@ export default async function EvalTaskChatPage({ params }: PageProps) {
       <EvalTaskChatBot
         threadId={thread.id}
         initialMessages={thread.messages ?? []}
+        showPromptInput={showPromptInputComponent}
       />
     </div>
   );

@@ -335,7 +335,7 @@ export function EvalDetailTable({
 
   // Handle view process action
   const handleViewProcess = (resultId: string) => {
-    router.push(`/eval-task/${resultId}`);
+    router.push(`/eval-task/${resultId}?showPromptInput=false`);
   };
 
   const visibleColumnsArray = columns.filter((col) =>

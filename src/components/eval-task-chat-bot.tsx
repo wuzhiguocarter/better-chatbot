@@ -31,6 +31,7 @@ type Props = {
   allowedMcpServers?: Record<string, any>;
   threadMentions?: Record<string, any[]>;
   threadImageToolModel?: Record<string, any>;
+  showPromptInput?: boolean;
 };
 
 export function EvalTaskChatBot({
@@ -42,6 +43,7 @@ export function EvalTaskChatBot({
   allowedMcpServers,
   threadMentions,
   threadImageToolModel,
+  showPromptInput = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
@@ -256,16 +258,18 @@ export function EvalTaskChatBot({
         })}
         {error && <ErrorMessage error={error} />}
       </div>
-      <div className="border-t bg-background px-4 py-3">
-        <PromptInput
-          threadId={threadId}
-          input={input}
-          setInput={setInput}
-          sendMessage={sendMessage}
-          isLoading={isLoading}
-          onStop={stop}
-        />
-      </div>
+      {showPromptInput && (
+        <div className="border-t bg-background px-4 py-3">
+          <PromptInput
+            threadId={threadId}
+            input={input}
+            setInput={setInput}
+            sendMessage={sendMessage}
+            isLoading={isLoading}
+            onStop={stop}
+          />
+        </div>
+      )}
     </div>
   );
 }
