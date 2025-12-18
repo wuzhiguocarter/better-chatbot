@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getSession } from "lib/auth/server";
 import {
   evalConfigurationRepository,
@@ -9,11 +10,21 @@ import {
   EvaluationConfiguration,
   EvaluationDetail,
   EvaluationResultItem,
+  EvalTaskChatConfig,
+  EvalTaskChatConfigZod,
+  EvaluationConfigurationZod,
 } from "@/types/eval/index";
+import { startEvalJobInBackground } from "lib/eval/eval-scheduler";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+const EvalPatchSchema = z.object({
+  action: z.enum(["start", "stop", "reset"]),
+  configuration: EvaluationConfigurationZod.optional(),
+  chatConfig: EvalTaskChatConfigZod.optional(),
+});
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   const session = await getSession();
@@ -90,32 +101,89 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const { id } = await params;
-  const body = await request.json();
-  const { action } = body;
+  const json = await request.json();
+  const { action, configuration, chatConfig } = EvalPatchSchema.parse(json);
 
-  // Handle different actions
+  const evalFile = await evalFileRepository.findById(id);
+
+  if (!evalFile || evalFile.userId !== session.user.id) {
+    return NextResponse.json(
+      { error: "Evaluation not found" },
+      { status: 404 },
+    );
+  }
+
   switch (action) {
-    case "start":
-      return NextResponse.json({
-        file: {
-          id: id,
-          status: "running",
+    case "start": {
+      if (evalFile.status === "running") {
+        return NextResponse.json(
+          { error: "Evaluation already running" },
+          { status: 400 },
+        );
+      }
+
+      const existingConfiguration =
+        await evalConfigurationRepository.getByFileId(id);
+
+      const baseConfiguration = configuration ?? existingConfiguration;
+
+      if (!baseConfiguration) {
+        return NextResponse.json(
+          { error: "Evaluation configuration not found" },
+          { status: 400 },
+        );
+      }
+
+      const rawChatConfig =
+        chatConfig ??
+        (configuration?.rawConfig as { chatConfig?: EvalTaskChatConfig })
+          ?.chatConfig ??
+        baseConfiguration.rawConfig?.chatConfig;
+
+      if (!rawChatConfig) {
+        return NextResponse.json(
+          { error: "Chat configuration is required to start" },
+          { status: 400 },
+        );
+      }
+
+      const {
+        id: _configId,
+        createdAt,
+        updatedAt,
+        ...restBaseConfig
+      } = baseConfiguration;
+
+      const configToSave: Omit<EvaluationConfiguration, "id"> = {
+        ...restBaseConfig,
+        fileId: id,
+        rawConfig: {
+          ...(restBaseConfig.rawConfig ?? {}),
+          ...(configuration?.rawConfig ?? {}),
+          chatConfig: rawChatConfig,
         },
+        createdAt: undefined,
+        updatedAt: undefined,
+      };
+
+      await evalConfigurationRepository.upsertByFileId(id, {
+        fileId: id,
+        columns: configToSave.columns,
+        totalRows: configToSave.totalRows,
+        inputColumn: configToSave.inputColumn,
+        expectedOutputColumn: configToSave.expectedOutputColumn ?? null,
+        actualOutputColumn: configToSave.actualOutputColumn ?? null,
+        previewRows: configToSave.previewRows ?? null,
+        rawConfig: configToSave.rawConfig ?? {},
       });
-    case "stop":
-      return NextResponse.json({
-        file: {
-          id: id,
-          status: "pending",
-        },
-      });
-    case "complete":
-      return NextResponse.json({
-        file: {
-          id: id,
-          status: "completed",
-        },
-      });
+
+      await evalResultRepository.listByFileId(id); // ensure results exist
+
+      await evalFileRepository.updateStatus({ id, status: "running" });
+      startEvalJobInBackground({ fileId: id, userId: session.user.id });
+
+      return NextResponse.json({ status: "running" });
+    }
     default:
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }

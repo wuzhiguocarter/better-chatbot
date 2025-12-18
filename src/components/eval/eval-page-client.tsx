@@ -3,7 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EvalMainContent } from "./eval-main-content";
 import { EvalFile } from "@/types/eval";
+import {
+  EvaluationConfiguration,
+  EvalTaskChatConfig,
+} from "@/types/eval/index";
+import { ChatAttachment, ChatMention } from "@/types/chat";
+import { appStore } from "@/app/store";
 import { toast } from "sonner";
+
+type EvalStartPayload = {
+  action: "start";
+  configuration: EvaluationConfiguration;
+  chatConfig: EvalTaskChatConfig;
+};
 
 export function EvalPageClient() {
   const [files, setFiles] = useState<EvalFile[]>([]);
@@ -116,19 +128,84 @@ export function EvalPageClient() {
 
   const handleFileAction = async (fileId: string, action: string) => {
     try {
+      let payload: EvalStartPayload | { action: string } = { action };
+
+      if (action === "start") {
+        const detailResponse = await fetch(`/api/eval/${fileId}`);
+        if (!detailResponse.ok) {
+          toast.error("无法获取评测配置");
+          return;
+        }
+
+        const detailData = await detailResponse.json();
+        const configuration: EvaluationConfiguration | null =
+          detailData?.evaluation?.configuration ?? null;
+
+        if (!configuration) {
+          toast.error("缺少评测配置");
+          return;
+        }
+
+        const {
+          chatModel,
+          toolChoice,
+          allowedAppDefaultToolkit,
+          allowedMcpServers,
+          threadMentions,
+          threadImageToolModel,
+        } = appStore.getState();
+
+        if (!chatModel) {
+          toast.error("请先选择模型");
+          return;
+        }
+
+        const mentions: ChatMention[] | undefined =
+          threadMentions[fileId] ?? threadMentions["eval-task-default"];
+        const imageToolModel =
+          threadImageToolModel[fileId] ??
+          threadImageToolModel["eval-task-default"];
+
+        const chatConfig: EvalTaskChatConfig = {
+          chatModel,
+          toolChoice,
+          allowedAppDefaultToolkit: allowedAppDefaultToolkit ?? [],
+          allowedMcpServers: allowedMcpServers ?? {},
+          mentions,
+          imageToolModel,
+          attachments: [] as ChatAttachment[],
+        };
+
+        payload = {
+          action: "start",
+          configuration: {
+            ...configuration,
+            rawConfig: {
+              ...(configuration.rawConfig ?? {}),
+              chatConfig,
+            },
+          },
+          chatConfig,
+        } satisfies EvalStartPayload;
+      }
+
       const response = await fetch(`/api/eval/${fileId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         fetchFiles(); // Refresh the list
+      } else {
+        const errorBody = await response.json().catch(() => ({}));
+        toast.error(errorBody.error || "操作失败");
       }
     } catch (error) {
       console.error("Failed to update file:", error);
+      toast.error("操作失败，请稍后再试");
     }
   };
 
