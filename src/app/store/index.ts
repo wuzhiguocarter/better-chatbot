@@ -36,6 +36,7 @@ export interface AppState {
   threadMentions: {
     [threadId: string]: ChatMention[];
   };
+  threadEvalTaskMentions: Record<string, ChatMention[] | undefined>;
   threadFiles: {
     [threadId: string]: UploadedFile[];
   };
@@ -66,6 +67,11 @@ export interface AppState {
     };
   };
   pendingThreadMention?: ChatMention;
+  setThreadEvalTaskMentions: (
+    threadId: string,
+    mentions: ChatMention[],
+  ) => void;
+  clearThreadEvalTaskMentions: (threadId?: string) => void;
 }
 
 export interface AppDispatch {
@@ -78,6 +84,7 @@ const initialState: AppState = {
   generatingTitleThreadIds: [],
   generatingEvalTaskTitleThreadIds: [],
   threadMentions: {},
+  threadEvalTaskMentions: {},
   threadFiles: {},
   threadImageToolModel: {},
   mcpList: [],
@@ -110,6 +117,8 @@ const initialState: AppState = {
     },
   },
   pendingThreadMention: undefined,
+  setThreadEvalTaskMentions: () => {},
+  clearThreadEvalTaskMentions: () => {},
 };
 
 export const appStore = create<AppState & AppDispatch>()(
@@ -117,6 +126,22 @@ export const appStore = create<AppState & AppDispatch>()(
     (set) => ({
       ...initialState,
       mutate: set,
+      setThreadEvalTaskMentions: (threadId: string, mentions: ChatMention[]) =>
+        set((state) => ({
+          threadEvalTaskMentions: {
+            ...state.threadEvalTaskMentions,
+            [threadId]: mentions,
+          },
+        })),
+      clearThreadEvalTaskMentions: (threadId?: string) =>
+        set((state) => {
+          if (!threadId) {
+            return { threadEvalTaskMentions: {} };
+          }
+          const nextMentions = { ...state.threadEvalTaskMentions };
+          delete nextMentions[threadId];
+          return { threadEvalTaskMentions: nextMentions };
+        }),
     }),
     {
       name: "mc-app-store-v2.0.1",
@@ -144,3 +169,12 @@ export const appStore = create<AppState & AppDispatch>()(
     },
   ),
 );
+
+export const useThreadEvalTaskMentions = (threadId: string) =>
+  appStore((s) => s.threadEvalTaskMentions[threadId] ?? []);
+
+export const useSetThreadEvalTaskMentions = () =>
+  appStore((s) => s.setThreadEvalTaskMentions);
+
+export const useClearThreadEvalTaskMentions = () =>
+  appStore((s) => s.clearThreadEvalTaskMentions);

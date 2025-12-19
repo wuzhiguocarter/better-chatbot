@@ -7,14 +7,27 @@ import {
   EvaluationConfiguration,
   EvalTaskChatConfig,
 } from "@/types/eval/index";
-import { ChatAttachment, ChatMention } from "@/types/chat";
-import { appStore } from "@/app/store";
+import { ChatAttachment, ChatMention, ChatModel } from "@/types/chat";
+import {
+  appStore,
+  useSetThreadEvalTaskMentions,
+  useThreadEvalTaskMentions,
+} from "@/app/store";
 import { toast } from "sonner";
+import { EvalTaskConfigDialog } from "./eval-task-config-dialog";
+import { useShallow } from "zustand/shallow";
 
 type EvalStartPayload = {
   action: "start";
   configuration: EvaluationConfiguration;
   chatConfig: EvalTaskChatConfig;
+};
+
+type EvalStartOptions = {
+  model?: ChatModel;
+  agentId?: string;
+  mentions?: ChatMention[];
+  toolChoice?: "auto";
 };
 
 export function EvalPageClient() {
@@ -25,6 +38,23 @@ export function EvalPageClient() {
   const [totalCount, setTotalCount] = useState(0);
   const [pageLimit, setPageLimit] = useState(9);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [pendingFileId, setPendingFileId] = useState<string | null>(null);
+
+  const [chatModel, appStoreMutate] = appStore(
+    useShallow((state) => [state.chatModel, state.mutate]),
+  );
+
+  const setThreadEvalTaskMentions = useSetThreadEvalTaskMentions();
+  const evalMentions = useThreadEvalTaskMentions(
+    pendingFileId ?? "eval-task-default",
+  );
+  const defaultAgentId = useMemo(() => {
+    const agentMention = evalMentions.find(
+      (mention) => mention.type === "agent",
+    ) as Extract<ChatMention, { type: "agent" }> | undefined;
+    return agentMention?.agentId;
+  }, [evalMentions]);
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -126,7 +156,11 @@ export function EvalPageClient() {
     }
   };
 
-  const handleFileAction = async (fileId: string, action: string) => {
+  const handleFileAction = async (
+    fileId: string,
+    action: string,
+    options: EvalStartOptions = {},
+  ) => {
     try {
       let payload: EvalStartPayload | { action: string } = { action };
 
@@ -151,25 +185,33 @@ export function EvalPageClient() {
           toolChoice,
           allowedAppDefaultToolkit,
           allowedMcpServers,
-          threadMentions,
           threadImageToolModel,
+          threadEvalTaskMentions,
         } = appStore.getState();
 
-        if (!chatModel) {
+        const selectedModel = options.model ?? chatModel;
+
+        if (!selectedModel) {
           toast.error("请先选择模型");
           return;
         }
 
-        const mentions: ChatMention[] | undefined =
-          threadMentions[fileId] ?? threadMentions["eval-task-default"];
+        const mentions: ChatMention[] =
+          options.mentions ??
+          threadEvalTaskMentions[fileId] ??
+          threadEvalTaskMentions["eval-task-default"] ??
+          [];
         const imageToolModel =
           threadImageToolModel[fileId] ??
           threadImageToolModel["eval-task-default"];
+        const allowedToolkit = mentions?.length
+          ? []
+          : (allowedAppDefaultToolkit ?? []);
 
         const chatConfig: EvalTaskChatConfig = {
-          chatModel,
-          toolChoice,
-          allowedAppDefaultToolkit: allowedAppDefaultToolkit ?? [],
+          chatModel: selectedModel,
+          toolChoice: options.toolChoice ?? toolChoice,
+          allowedAppDefaultToolkit: allowedToolkit,
           allowedMcpServers: allowedMcpServers ?? {},
           mentions,
           imageToolModel,
@@ -209,6 +251,15 @@ export function EvalPageClient() {
     }
   };
 
+  const handleStartWithConfig = (fileId: string, action: string) => {
+    if (action === "start") {
+      setPendingFileId(fileId);
+      setConfigDialogOpen(true);
+      return;
+    }
+    handleFileAction(fileId, action);
+  };
+
   const handleDeleteFile = async (fileId: string) => {
     if (!fileId) return;
 
@@ -240,21 +291,50 @@ export function EvalPageClient() {
   }, [pageLimit, totalCount]);
 
   return (
-    <EvalMainContent
-      files={files}
-      loading={loading}
-      searchQuery={searchQuery}
-      setSearchQuery={setSearchQuery}
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}
-      totalPages={totalPages}
-      hasNextPage={currentPage < totalPages}
-      hasPreviousPage={currentPage > 1}
-      onCreateEval={handleCreateEval}
-      onFileAction={handleFileAction}
-      onDeleteFile={handleDeleteFile}
-      onRefresh={fetchFiles}
-      deletingId={deletingId}
-    />
+    <>
+      <EvalMainContent
+        files={files}
+        loading={loading}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        hasNextPage={currentPage < totalPages}
+        hasPreviousPage={currentPage > 1}
+        onCreateEval={handleCreateEval}
+        onFileAction={handleStartWithConfig}
+        onDeleteFile={handleDeleteFile}
+        onRefresh={fetchFiles}
+        deletingId={deletingId}
+      />
+
+      <EvalTaskConfigDialog
+        open={configDialogOpen}
+        onOpenChange={(open) => {
+          setConfigDialogOpen(open);
+          if (!open) {
+            setPendingFileId(null);
+          }
+        }}
+        threadId={pendingFileId ?? "eval-task-default"}
+        defaultModel={chatModel}
+        defaultAgentId={defaultAgentId}
+        defaultMentions={evalMentions}
+        onConfirm={({ model, mentions, agentId, toolChoice }) => {
+          if (!pendingFileId) return;
+          setThreadEvalTaskMentions(pendingFileId, mentions);
+          appStoreMutate({ chatModel: model, toolChoice });
+          handleFileAction(pendingFileId, "start", {
+            model,
+            agentId,
+            mentions,
+            toolChoice,
+          });
+          setConfigDialogOpen(false);
+          setPendingFileId(null);
+        }}
+      />
+    </>
   );
 }
