@@ -170,8 +170,18 @@ export const appStore = create<AppState & AppDispatch>()(
   ),
 );
 
+// Cache empty array to prevent infinite re-renders
+const EMPTY_MENTIONS: ChatMention[] = [];
+
+// Memoized selector to prevent infinite re-renders
+const createThreadEvalTaskMentionsSelector =
+  (threadId: string) => (state: AppState & AppDispatch) => {
+    const mentions = state.threadEvalTaskMentions[threadId];
+    return mentions ?? EMPTY_MENTIONS;
+  };
+
 export const useThreadEvalTaskMentions = (threadId: string) =>
-  appStore((s) => s.threadEvalTaskMentions[threadId] ?? []);
+  appStore(createThreadEvalTaskMentionsSelector(threadId));
 
 export const useSetThreadEvalTaskMentions = () =>
   appStore((s) => s.setThreadEvalTaskMentions);
