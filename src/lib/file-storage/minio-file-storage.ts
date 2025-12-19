@@ -15,7 +15,6 @@ import {
 import { FileNotFoundError } from "lib/errors";
 import { generateUUID } from "lib/utils";
 import logger from "logger";
-import { s } from "ts-safe";
 
 const STORAGE_PREFIX = resolveStoragePrefix();
 

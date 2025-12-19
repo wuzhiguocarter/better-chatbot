@@ -23,12 +23,13 @@ export const pgEvalFileRepository: EvalFileRepository = {
 
     if (search && search.trim()) {
       const term = `%${search.trim()}%`;
-      conditions.push(
-        or(
-          ilike(EvalFileTable.title, term),
-          ilike(EvalFileTable.description, term),
-        ),
+      const searchCondition = or(
+        ilike(EvalFileTable.title, term),
+        ilike(EvalFileTable.description, term),
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     const whereClause =

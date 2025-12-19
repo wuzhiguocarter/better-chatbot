@@ -39,7 +39,13 @@ async function runEvalJob({
       throw new Error(`Evaluation configuration not found for file ${fileId}`);
     }
 
-    const chatConfig = extractChatConfig(configuration);
+    // Convert EvaluationConfigurationEntity to EvaluationConfiguration
+    const configForExtraction: EvaluationConfiguration = {
+      ...configuration,
+      createdAt: configuration.createdAt.toISOString(),
+      updatedAt: configuration.updatedAt.toISOString(),
+    };
+    const chatConfig = extractChatConfig(configForExtraction);
     const results = await evalResultRepository.listByFileId(fileId);
     const pendingResults = results.filter((result) => result.success !== true);
 
