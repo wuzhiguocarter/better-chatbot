@@ -6,11 +6,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 2333",
     "dev:turbopack": "next dev --turbopack",
     "dev:https": "next dev --experimental-https",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 2333",
     "build:local": "cross-env NO_HTTPS='1' next build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -165,6 +165,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
+      "@parcel/watcher",
+      "@swc/core",
       "@tailwindcss/oxide",
       "esbuild",
       "sharp",
