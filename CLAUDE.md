@@ -227,3 +227,6 @@ tests/
 - [Docker 部署指南](./docs/tips-guides/docker.md)
 - [Vercel 部署指南](./docs/tips-guides/vercel.md)
 - [MCP 服务器设置](./docs/tips-guides/mcp-server-setup-and-tool-testing.md)
+
+# Rules Must Follow
+若有任何代码文件变更，请及时更新对应文件夹下的 CLAUDE.md 文档，以确保文档内容与实际代码保持一致。
