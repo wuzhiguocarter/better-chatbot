@@ -41,7 +41,6 @@ type MentionItemType = {
 interface ChatMentionInputProps {
   onChange: (text: string) => void;
   onChangeMention: (mentions: ChatMention[]) => void;
-  onEnter?: () => void;
   placeholder?: string;
   input: string;
   disabledMention?: boolean;
@@ -53,7 +52,6 @@ interface ChatMentionInputProps {
 export default function ChatMentionInput({
   onChange,
   onChangeMention,
-  onEnter,
   placeholder,
   ref,
   input,
@@ -83,7 +81,6 @@ export default function ChatMentionInput({
   return (
     <MentionInput
       content={input}
-      onEnter={onEnter}
       placeholder={placeholder}
       suggestionChar="@"
       disabledMention={disabledMention}

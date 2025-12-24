@@ -84,7 +84,6 @@ export default function CommentForm({
           placeholder="Write a comment..."
           content={content}
           onChange={handleContentChange}
-          onEnter={handleSubmit}
           disabledMention={true}
         />
       </div>
