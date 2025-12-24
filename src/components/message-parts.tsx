@@ -17,6 +17,7 @@ import {
   EllipsisIcon,
   FileIcon,
   Download,
+  Share,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "ui/tooltip";
 import { Button } from "ui/button";
@@ -60,6 +61,7 @@ import {
 
 import { WorkflowInvocation } from "./tool-invocation/workflow-invocation";
 import dynamic from "next/dynamic";
+import { ChatExportPopup } from "./export/chat-export-popup";
 import { notify } from "lib/notify";
 import { ModelProviderIcon } from "ui/model-provider-icon";
 import { appStore } from "@/app/store";
@@ -390,6 +392,18 @@ export const AssistMessagePart = memo(function AssistMessagePart({
             </TooltipTrigger>
             <TooltipContent>Copy</TooltipContent>
           </Tooltip>
+          {threadId && (
+            <ChatExportPopup threadId={threadId}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-3! p-4!"
+                title="Share Link"
+              >
+                <Share />
+              </Button>
+            </ChatExportPopup>
+          )}
           {!readonly && (
             <>
               <Tooltip>
