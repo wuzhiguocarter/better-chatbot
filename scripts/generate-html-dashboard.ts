@@ -756,8 +756,15 @@ async function main() {
       `\n💡 提示: 运行 \`pnpm dev\` 后访问 http://localhost:3000/dashboard/index.html`,
     );
   } catch (error) {
-    console.error("❌ 生成失败:", error.message);
-    if (error.code === "ECONNREFUSED") {
+    console.error(
+      "❌ 生成失败:",
+      error instanceof Error ? error.message : String(error),
+    );
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "ECONNREFUSED"
+    ) {
       console.error("💡 提示: 请检查数据库连接地址和端口是否正确");
     }
     process.exit(1);

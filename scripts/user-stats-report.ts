@@ -249,13 +249,18 @@ async function generateUserStatsReport() {
       );
     });
   } catch (error) {
-    console.error("❌ 执行出错:", error.message);
-    if (error.code === "ECONNREFUSED") {
-      console.error("💡 提示: 请检查数据库连接地址和端口是否正确");
-    } else if (error.code === "3D000") {
-      console.error("💡 提示: 数据库不存在");
-    } else if (error.code === "28P01") {
-      console.error("💡 提示: 用户名或密码错误");
+    console.error(
+      "❌ 执行出错:",
+      error instanceof Error ? error.message : String(error),
+    );
+    if (error instanceof Error && "code" in error) {
+      if (error.code === "ECONNREFUSED") {
+        console.error("💡 提示: 请检查数据库连接地址和端口是否正确");
+      } else if (error.code === "3D000") {
+        console.error("💡 提示: 数据库不存在");
+      } else if (error.code === "28P01") {
+        console.error("💡 提示: 用户名或密码错误");
+      }
     }
     process.exit(1);
   } finally {
