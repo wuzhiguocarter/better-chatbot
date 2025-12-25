@@ -6,8 +6,9 @@
 # 使用方法:
 #   ./scripts/run-daily-stats.sh
 #
-# Crontab 配置:
-#   0 0 * * * /Users/didi/projects/better-chatbot/scripts/run-daily-stats.sh >> /Users/didi/projects/better-chatbot/logs/cron.log 2>&1
+# Crontab 配置: ${workspaceDir}替换为你的项目路径
+#  每天午夜运行一次
+#   0 0 * * * ${workspaceDir}/scripts/run-daily-stats.sh >> ${workspaceDir}/logs/cron.log 2>&1
 #
 
 set -e
