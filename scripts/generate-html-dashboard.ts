@@ -249,7 +249,6 @@ function generateHTML(data: DashboardData): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Better Chatbot - 数据统计仪表盘</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -506,6 +505,7 @@ function generateHTML(data: DashboardData): string {
   </style>
 </head>
 <body>
+  <script src="./chart.umd.min.js"></script>
   <div class="dashboard">
     <div class="header">
       <h1>🤖 科邦超级销售助理——数据统计仪表盘</h1>

@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Better Chatbot - 数据统计仪表盘</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -261,6 +260,7 @@
   </style>
 </head>
 <body>
+  <script src="./chart.umd.min.js"></script>
   <div class="dashboard">
     <div class="header">
       <h1>🤖 科邦超级销售助理——数据统计仪表盘</h1>
@@ -286,8 +286,8 @@
       </div>
       <div class="stat-card warning">
         <div class="stat-label">会话总数</div>
-        <div class="stat-value">63</div>
-        <div class="stat-sub">消息: 235 | 轮次: 118</div>
+        <div class="stat-value">64</div>
+        <div class="stat-sub">消息: 237 | 轮次: 119</div>
       </div>
     </div>
 
@@ -356,13 +356,13 @@
       <tr>
         <td>鹿浩忠</td>
         <td>luhaozhong@fanmikeji.cn</td>
-        <td><span class="badge badge-primary">5</span></td>
-        <td><span class="badge badge-info">23</span></td>
-        <td><span class="badge badge-success">12</span></td>
-        <td>2.30</td>
+        <td><span class="badge badge-primary">6</span></td>
+        <td><span class="badge badge-info">25</span></td>
+        <td><span class="badge badge-success">13</span></td>
+        <td>2.08</td>
         <td>3</td>
         <td>2025/12/23</td>
-        <td>2025/12/25 08:58:30</td>
+        <td>2025/12/25 20:36:04</td>
       </tr>
     
       <tr>
@@ -455,7 +455,7 @@
     </div>
 
     <div class="footer">
-      <p>📊 数据生成时间: 2025/12/25 20:12:15 | 活动周期: Sun Dec 21 2025 00:00:00 GMT+0800 (中国标准时间) ~ Thu Dec 25 2025 00:00:00 GMT+0800 (中国标准时间)</p>
+      <p>📊 数据生成时间: 2025/12/25 21:04:43 | 活动周期: Sun Dec 21 2025 00:00:00 GMT+0800 (中国标准时间) ~ Thu Dec 25 2025 00:00:00 GMT+0800 (中国标准时间)</p>
       <p>Better Chatbot © 2025 - 数据统计仪表盘</p>
     </div>
   </div>
@@ -493,7 +493,7 @@
           yAxisID: 'y'
         }, {
           label: '消息数',
-          data: [58,28,42,64,43],
+          data: [58,28,42,64,45],
           borderColor: '#f5576c',
           backgroundColor: 'rgba(245, 87, 108, 0.1)',
           fill: true,
@@ -555,12 +555,12 @@
         labels: ["wuzhiguocarter","Bin","鹿浩忠","任世伟","Bin","冯德亮","韩帅","wen","科邦王睿","刘旭日"],
         datasets: [{
           label: '消息数',
-          data: [93,37,23,16,14,12,12,10,10,8],
+          data: [93,37,25,16,14,12,12,10,10,8],
           backgroundColor: 'rgba(102, 126, 234, 0.8)',
           borderRadius: 8,
         }, {
           label: '对话轮次',
-          data: [47,19,12,8,7,6,6,5,5,4],
+          data: [47,19,13,8,7,6,6,5,5,4],
           backgroundColor: 'rgba(245, 87, 108, 0.8)',
           borderRadius: 8,
         }]
