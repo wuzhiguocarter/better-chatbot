@@ -29,19 +29,7 @@ echo "════════════════════════�
 echo "📊 每日统计任务开始: $(date '+%Y-%m-%d %H:%M:%S')" | tee -a "$LOG_FILE"
 echo "═══════════════════════════════════════════════════════" | tee -a "$LOG_FILE"
 
-# 1. 生成终端统计报表
-echo "" | tee -a "$LOG_FILE"
-echo "🔄 正在生成终端统计报表..." | tee -a "$LOG_FILE"
-echo "" | tee -a "$LOG_FILE"
-
-if npx tsx "$PROJECT_DIR/scripts/user-stats-report.ts" 2>&1 | tee -a "$LOG_FILE"; then
-    echo "✅ 终端统计报表生成成功" | tee -a "$LOG_FILE"
-else
-    echo "❌ 终端统计报表生成失败" | tee -a "$LOG_FILE"
-    exit 1
-fi
-
-# 2. 生成 HTML 仪表盘
+# 生成 HTML 仪表盘
 echo "" | tee -a "$LOG_FILE"
 echo "🔄 正在生成 HTML 仪表盘..." | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
