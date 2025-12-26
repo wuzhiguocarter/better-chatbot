@@ -12,6 +12,9 @@ export default () => {
     devIndicators: {
       position: "bottom-right",
     },
+    turbopack: {
+      root: process.cwd(),
+    },
     env: {
       NO_HTTPS: process.env.NO_HTTPS,
     },
