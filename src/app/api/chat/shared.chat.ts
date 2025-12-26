@@ -517,3 +517,48 @@ export function parseFollowUpQuestions(text: string): string[] {
 export function stripFollowUpQuestionsTags(text: string): string {
   return text.replace(/<fq>[\s\S]*?<\/fq>/g, "").trim();
 }
+
+/**
+ * 从文本中增量解析后续问题（支持不完整 XML）
+ * 用于前端流式解析，可以处理未闭合的 <fq> 标签
+ *
+ * @param text - 当前累积的文本内容
+ * @param previousQuestions - 之前已解析的问题列表（用于去重和增量更新）
+ * @returns 新解析的问题列表
+ */
+export function parseFollowUpQuestionsIncremental(
+  text: string,
+  previousQuestions: string[] = [],
+): string[] {
+  const questions = [...previousQuestions];
+
+  const fqStartMatch = text.match(/<fq>/i);
+  if (!fqStartMatch) return questions;
+
+  const afterFqStart = text.substring((fqStartMatch.index ?? 0) + 4);
+  const fqEndMatch = afterFqStart.match(/<\/fq>/i);
+  const contentToParse = fqEndMatch
+    ? afterFqStart.substring(0, fqEndMatch.index ?? 0)
+    : afterFqStart;
+
+  // 匹配完整或部分问题（最少5字符）
+  const qRegex = /<q>(.*?)<\/q>|<q>([^<]{5,})/g;
+  let match;
+  let questionIndex = 0;
+
+  while ((match = qRegex.exec(contentToParse)) !== null) {
+    const questionText = (match[1] || match[2] || "").trim();
+    const isComplete = match[0].includes("</q>");
+
+    if (questionText && questionText.length >= 5) {
+      if (questionIndex < questions.length) {
+        questions[questionIndex] = questionText;
+      } else if (isComplete) {
+        questions.push(questionText);
+      }
+      questionIndex++;
+    }
+  }
+
+  return questions.filter((q) => q.length > 0).slice(0, 5);
+}

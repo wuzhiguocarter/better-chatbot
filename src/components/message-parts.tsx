@@ -68,6 +68,47 @@ import { appStore } from "@/app/store";
 import { BACKGROUND_COLORS, EMOJI_DATA } from "lib/const";
 import { FollowUpQuestionsPart } from "@/components/message-parts/follow-up-questions-part";
 
+/**
+ * 从文本中增量解析后续问题（支持不完整 XML）
+ * 用于前端流式解析，可以处理未闭合的 <fq> 标签
+ */
+function parseFollowUpQuestionsIncremental(
+  text: string,
+  previousQuestions: string[] = [],
+): string[] {
+  const questions = [...previousQuestions];
+
+  const fqStartMatch = text.match(/<fq>/i);
+  if (!fqStartMatch) return questions;
+
+  const afterFqStart = text.substring((fqStartMatch.index ?? 0) + 4);
+  const fqEndMatch = afterFqStart.match(/<\/fq>/i);
+  const contentToParse = fqEndMatch
+    ? afterFqStart.substring(0, fqEndMatch.index ?? 0)
+    : afterFqStart;
+
+  // 匹配完整或部分问题（最少5字符）
+  const qRegex = /<q>(.*?)<\/q>|<q>([^<]{5,})/g;
+  let match;
+  let questionIndex = 0;
+
+  while ((match = qRegex.exec(contentToParse)) !== null) {
+    const questionText = (match[1] || match[2] || "").trim();
+    const isComplete = match[0].includes("</q>");
+
+    if (questionText && questionText.length >= 5) {
+      if (questionIndex < questions.length) {
+        questions[questionIndex] = questionText;
+      } else if (isComplete) {
+        questions.push(questionText);
+      }
+      questionIndex++;
+    }
+  }
+
+  return questions.filter((q) => q.length > 0).slice(0, 5);
+}
+
 type MessagePart = UIMessage["parts"][number];
 type TextMessagePart = Extract<MessagePart, { type: "text" }>;
 type AssistMessagePart = Extract<MessagePart, { type: "text" }>;
@@ -313,15 +354,30 @@ export const AssistMessagePart = memo(function AssistMessagePart({
     string[]
   >([]);
 
-  // 当原始文本更新时，实时解析后续问题
+  // 跟踪上次解析的文本长度，用于性能优化
+  const lastParsedLengthRef = useRef(0);
+
+  // 当原始文本更新时，实时解析后续问题（增强版：支持不完整 XML）
   useEffect(() => {
     if (part.text) {
-      const questions = parseFollowUpQuestionsFromText(part.text);
-      if (questions.length > 0) {
-        setStreamFollowUpQuestions(questions);
+      // 性能优化：只有文本增长超过阈值时才重新解析
+      if (part.text.length > lastParsedLengthRef.current + 10) {
+        const questions = parseFollowUpQuestionsIncremental(
+          part.text,
+          streamFollowUpQuestions,
+        );
+
+        // 只在问题列表变化时更新
+        if (
+          JSON.stringify(questions) !== JSON.stringify(streamFollowUpQuestions)
+        ) {
+          setStreamFollowUpQuestions(questions);
+        }
+
+        lastParsedLengthRef.current = part.text.length;
       }
     }
-  }, [part.text]);
+  }, [part.text, streamFollowUpQuestions]);
 
   // 清理文本中的后续问题 XML 标签
   const cleanedText = useMemo(() => {
@@ -335,25 +391,6 @@ export const AssistMessagePart = memo(function AssistMessagePart({
   const agent = useMemo(() => {
     return agentList.find((a) => a.id === metadata?.agentId);
   }, [metadata, agentList]);
-
-  // 辅助函数：从文本中解析后续问题
-  function parseFollowUpQuestionsFromText(text: string): string[] {
-    const fqMatch = text.match(/<fq>([\s\S]*?)<\/fq>/);
-    if (!fqMatch) return [];
-
-    const questions: string[] = [];
-    const qRegex = /<q>(.*?)<\/q>/g;
-    let match;
-
-    while ((match = qRegex.exec(fqMatch[1])) !== null) {
-      const question = match[1].trim();
-      if (question) {
-        questions.push(question);
-      }
-    }
-
-    return questions.slice(0, 5);
-  }
 
   const deleteMessage = useCallback(async () => {
     if (!setMessages) return;

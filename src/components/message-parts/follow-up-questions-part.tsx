@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface FollowUpQuestionsPartProps {
   questions: string[];
@@ -23,8 +24,15 @@ export function FollowUpQuestionsPart({
       </span>
       <div className="flex flex-col gap-2">
         {questions.map((question, index) => (
-          <button
+          <motion.button
             key={index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: index * 0.15,
+              duration: 0.3,
+              ease: "easeOut",
+            }}
             onClick={() => onQuestionClick(question)}
             className={cn(
               "group relative w-full text-left p-3 text-sm rounded-lg",
@@ -35,7 +43,7 @@ export function FollowUpQuestionsPart({
           >
             <span className="relative z-10">{question}</span>
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
+          </motion.button>
         ))}
       </div>
     </div>

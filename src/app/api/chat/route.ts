@@ -339,7 +339,7 @@ export async function POST(request: Request) {
           abortSignal: request.signal,
         });
 
-        // 累加文本内容以便解析后续问题（用于 messageMetadata）
+        // 累加文本内容以便解析后续问题
         (async () => {
           for await (const chunk of result.fullStream) {
             if (chunk.type === "text-delta") {
