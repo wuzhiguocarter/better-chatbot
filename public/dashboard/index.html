@@ -163,6 +163,7 @@
       padding: 25px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      margin-bottom: 30px;
     }
 
     .table-title {
@@ -281,13 +282,13 @@
       </div>
       <div class="stat-card info">
         <div class="stat-label">平均日活 DAU</div>
-        <div class="stat-value">5.2</div>
-        <div class="stat-sub">活跃天数: 5 天</div>
+        <div class="stat-value">4.8</div>
+        <div class="stat-sub">活跃天数: 6 天</div>
       </div>
       <div class="stat-card warning">
         <div class="stat-label">会话总数</div>
-        <div class="stat-value">64</div>
-        <div class="stat-sub">消息: 237 | 轮次: 119</div>
+        <div class="stat-value">69</div>
+        <div class="stat-sub">消息: 249 | 轮次: 125</div>
       </div>
     </div>
 
@@ -306,6 +307,52 @@
           <div class="loading-spinner"></div>
           <canvas id="userRankChart"></canvas>
         </div>
+      </div>
+    </div>
+
+    <!-- 当日用户详细表格 -->
+    <div class="table-card">
+      <div class="table-title">📋 当日用户详细统计 (2 位活跃用户) - 2025/12/26</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>用户名</th>
+              <th>邮箱</th>
+              <th>会话数</th>
+              <th>消息数</th>
+              <th>对话轮次</th>
+              <th>平均轮次/会话</th>
+              <th>注册时间</th>
+              <th>最后活跃</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+      <tr>
+        <td>韩帅</td>
+        <td>1376630974@qq.com</td>
+        <td><span class="badge badge-primary">2</span></td>
+        <td><span class="badge badge-info">6</span></td>
+        <td><span class="badge badge-success">3</span></td>
+        <td>1.50</td>
+        <td>2025/12/23</td>
+        <td>2025/12/26 08:51:29</td>
+      </tr>
+    
+      <tr>
+        <td>鹿浩忠</td>
+        <td>luhaozhong@fanmikeji.cn</td>
+        <td><span class="badge badge-primary">2</span></td>
+        <td><span class="badge badge-info">4</span></td>
+        <td><span class="badge badge-success">2</span></td>
+        <td>1.00</td>
+        <td>2025/12/23</td>
+        <td>2025/12/26 09:16:54</td>
+      </tr>
+    
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -356,13 +403,25 @@
       <tr>
         <td>鹿浩忠</td>
         <td>luhaozhong@fanmikeji.cn</td>
+        <td><span class="badge badge-primary">8</span></td>
+        <td><span class="badge badge-info">29</span></td>
+        <td><span class="badge badge-success">15</span></td>
+        <td>1.81</td>
+        <td>4</td>
+        <td>2025/12/23</td>
+        <td>2025/12/26 09:16:54</td>
+      </tr>
+    
+      <tr>
+        <td>韩帅</td>
+        <td>1376630974@qq.com</td>
         <td><span class="badge badge-primary">6</span></td>
-        <td><span class="badge badge-info">25</span></td>
-        <td><span class="badge badge-success">13</span></td>
-        <td>2.08</td>
+        <td><span class="badge badge-info">18</span></td>
+        <td><span class="badge badge-success">9</span></td>
+        <td>1.50</td>
         <td>3</td>
         <td>2025/12/23</td>
-        <td>2025/12/25 20:36:04</td>
+        <td>2025/12/26 08:51:29</td>
       </tr>
     
       <tr>
@@ -402,18 +461,6 @@
       </tr>
     
       <tr>
-        <td>韩帅</td>
-        <td>1376630974@qq.com</td>
-        <td><span class="badge badge-primary">4</span></td>
-        <td><span class="badge badge-info">12</span></td>
-        <td><span class="badge badge-success">6</span></td>
-        <td>1.50</td>
-        <td>2</td>
-        <td>2025/12/23</td>
-        <td>2025/12/25 09:06:52</td>
-      </tr>
-    
-      <tr>
         <td>wen</td>
         <td>wenhongwei@fanmikeji.cn</td>
         <td><span class="badge badge-primary">3</span></td>
@@ -440,13 +487,13 @@
       <tr>
         <td>刘旭日</td>
         <td>759208618@qq.com</td>
-        <td><span class="badge badge-primary">3</span></td>
-        <td><span class="badge badge-info">8</span></td>
-        <td><span class="badge badge-success">4</span></td>
-        <td>1.33</td>
-        <td>2</td>
+        <td><span class="badge badge-primary">4</span></td>
+        <td><span class="badge badge-info">10</span></td>
+        <td><span class="badge badge-success">5</span></td>
+        <td>1.25</td>
+        <td>3</td>
         <td>2025/12/23</td>
-        <td>2025/12/24 03:48:47</td>
+        <td>2025/12/25 21:50:14</td>
       </tr>
     
           </tbody>
@@ -455,7 +502,7 @@
     </div>
 
     <div class="footer">
-      <p>📊 数据生成时间: 2025/12/25 21:04:43 | 活动周期: Sun Dec 21 2025 00:00:00 GMT+0800 (中国标准时间) ~ Thu Dec 25 2025 00:00:00 GMT+0800 (中国标准时间)</p>
+      <p>📊 数据生成时间: 2025/12/26 09:19:05 | 活动周期: Sun Dec 21 2025 00:00:00 GMT+0800 (中国标准时间) ~ Fri Dec 26 2025 00:00:00 GMT+0800 (中国标准时间)</p>
       <p>Better Chatbot © 2025 - 数据统计仪表盘</p>
     </div>
   </div>
@@ -482,10 +529,10 @@
       const dailyTrendChart = new Chart(document.getElementById('dailyTrendChart'), {
       type: 'line',
       data: {
-        labels: ["12/21","12/22","12/23","12/24","12/25"],
+        labels: ["12/21","12/22","12/23","12/24","12/25","12/26"],
         datasets: [{
           label: '活跃用户数',
-          data: [2,5,8,6,5],
+          data: [2,5,8,6,6,2],
           borderColor: '#667eea',
           backgroundColor: 'rgba(102, 126, 234, 0.1)',
           fill: true,
@@ -493,7 +540,7 @@
           yAxisID: 'y'
         }, {
           label: '消息数',
-          data: [58,28,42,64,45],
+          data: [58,28,42,64,47,10],
           borderColor: '#f5576c',
           backgroundColor: 'rgba(245, 87, 108, 0.1)',
           fill: true,
@@ -552,15 +599,15 @@
     const userRankChart = new Chart(document.getElementById('userRankChart'), {
       type: 'bar',
       data: {
-        labels: ["wuzhiguocarter","Bin","鹿浩忠","任世伟","Bin","冯德亮","韩帅","wen","科邦王睿","刘旭日"],
+        labels: ["wuzhiguocarter","Bin","鹿浩忠","韩帅","任世伟","Bin","冯德亮","wen","科邦王睿","刘旭日"],
         datasets: [{
           label: '消息数',
-          data: [93,37,25,16,14,12,12,10,10,8],
+          data: [93,37,29,18,16,14,12,10,10,10],
           backgroundColor: 'rgba(102, 126, 234, 0.8)',
           borderRadius: 8,
         }, {
           label: '对话轮次',
-          data: [47,19,13,8,7,6,6,5,5,4],
+          data: [47,19,15,9,8,7,6,5,5,5],
           backgroundColor: 'rgba(245, 87, 108, 0.8)',
           borderRadius: 8,
         }]

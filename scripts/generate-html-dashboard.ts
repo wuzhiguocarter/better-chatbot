@@ -48,6 +48,7 @@ interface DashboardData {
   avgRoundsAllUsers: string;
   activationRate: string;
   userStats: UserStats[];
+  dailyUserStats: UserStats[];
   dailyStats: Array<{ date: string; active_users: number; messages: number }>;
 }
 
@@ -160,6 +161,47 @@ async function fetchDashboardData(): Promise<DashboardData> {
     `);
     const userStats = userStatsResult.rows;
 
+    // 查询6: 当日用户详细统计
+    const dailyUserStatsResult = await client.query(`
+      WITH user_stats AS (
+        SELECT
+          u.id,
+          u.name,
+          u.email,
+          u.created_at as user_created_at,
+          (SELECT COUNT(*) FROM chat_thread ct WHERE ct.user_id = u.id AND DATE(ct.created_at) = CURRENT_DATE) as total_threads,
+          (SELECT COUNT(*) FROM chat_thread ct
+           JOIN chat_message cm ON cm.thread_id = ct.id
+           WHERE ct.user_id = u.id AND DATE(cm.created_at) = CURRENT_DATE) as total_messages,
+          (SELECT MAX(cm.created_at)
+           FROM chat_thread ct
+           JOIN chat_message cm ON cm.thread_id = ct.id
+           WHERE ct.user_id = u.id AND DATE(cm.created_at) = CURRENT_DATE) as last_active_at
+        FROM "user" u
+      )
+      SELECT
+        id as user_id,
+        name,
+        email,
+        total_threads,
+        total_messages,
+        CASE
+          WHEN total_messages > 0 THEN total_messages / 2.0
+          ELSE 0
+        END as conversation_rounds,
+        CASE
+          WHEN total_threads > 0 THEN ROUND((total_messages / 2.0) / total_threads::numeric, 2)
+          ELSE 0
+        END as avg_rounds_per_thread,
+        user_created_at,
+        last_active_at,
+        0 as active_days
+      FROM user_stats
+      WHERE total_threads > 0 OR total_messages > 0
+      ORDER BY total_messages DESC;
+    `);
+    const dailyUserStats = dailyUserStatsResult.rows;
+
     // 汇总统计
     const totalThreads = userStats.reduce(
       (sum, row) => sum + parseInt(row.total_threads),
@@ -193,6 +235,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
       avgRoundsAllUsers,
       activationRate,
       userStats: userStats as unknown as UserStats[],
+      dailyUserStats: dailyUserStats as unknown as UserStats[],
       dailyStats,
     };
   } finally {
@@ -201,7 +244,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
 }
 
 function generateHTML(data: DashboardData): string {
-  const { userStats, dailyStats } = data;
+  const { userStats, dailyUserStats, dailyStats } = data;
 
   // 生成图表数据 - 简化日期格式
   const dates = dailyStats
@@ -236,6 +279,28 @@ function generateHTML(data: DashboardData): string {
         <td><span class="badge badge-success">${Math.round(user.conversation_rounds)}</span></td>
         <td>${user.avg_rounds_per_thread}</td>
         <td>${user.active_days || 0}</td>
+        <td>${new Date(user.user_created_at).toLocaleDateString("zh-CN")}</td>
+        <td>${lastActive}</td>
+      </tr>
+    `;
+    })
+    .join("");
+
+  // 当日用户表格行
+  const todayDate = new Date().toLocaleDateString("zh-CN");
+  const dailyTableRows = dailyUserStats
+    .map((user) => {
+      const lastActive = user.last_active_at
+        ? new Date(user.last_active_at).toLocaleString("zh-CN")
+        : "无";
+      return `
+      <tr>
+        <td>${user.name || "未命名"}</td>
+        <td>${user.email}</td>
+        <td><span class="badge badge-primary">${user.total_threads}</span></td>
+        <td><span class="badge badge-info">${user.total_messages}</span></td>
+        <td><span class="badge badge-success">${Math.round(user.conversation_rounds)}</span></td>
+        <td>${user.avg_rounds_per_thread}</td>
         <td>${new Date(user.user_created_at).toLocaleDateString("zh-CN")}</td>
         <td>${lastActive}</td>
       </tr>
@@ -408,6 +473,7 @@ function generateHTML(data: DashboardData): string {
       padding: 25px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      margin-bottom: 30px;
     }
 
     .table-title {
@@ -551,6 +617,30 @@ function generateHTML(data: DashboardData): string {
           <div class="loading-spinner"></div>
           <canvas id="userRankChart"></canvas>
         </div>
+      </div>
+    </div>
+
+    <!-- 当日用户详细表格 -->
+    <div class="table-card">
+      <div class="table-title">📋 当日用户详细统计 (${dailyUserStats.length} 位活跃用户) - ${todayDate}</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>用户名</th>
+              <th>邮箱</th>
+              <th>会话数</th>
+              <th>消息数</th>
+              <th>对话轮次</th>
+              <th>平均轮次/会话</th>
+              <th>注册时间</th>
+              <th>最后活跃</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dailyTableRows}
+          </tbody>
+        </table>
       </div>
     </div>
 
