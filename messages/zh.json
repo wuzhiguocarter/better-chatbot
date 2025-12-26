@@ -75,6 +75,9 @@
   "Chat": {
     "Error": "聊天错误",
     "thisMessageWasNotSavedPleaseTryTheChatAgain": "此消息未保存。请重试聊天。",
+    "FollowUpQuestions": {
+      "title": "相关问题"
+    },
     "uploadImage": "上传文件",
     "generateImage": "生成图片",
     "imageUploadedSuccessfully": "图片上传成功",

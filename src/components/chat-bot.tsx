@@ -448,6 +448,7 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
                     isLastMessage={isLastMessage}
                     setMessages={setMessages}
                     sendMessage={sendMessage}
+                    setInput={setInput}
                     className={
                       isLastMessage &&
                       message.role != "user" &&

@@ -39,6 +39,8 @@ import {
   loadWorkFlowTools,
   loadAppDefaultTools,
   convertToSavePart,
+  parseFollowUpQuestions,
+  stripFollowUpQuestionsTags,
 } from "./shared.chat";
 import {
   rememberAgentAction,
@@ -204,6 +206,9 @@ export async function POST(request: Request) {
 
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
+        // 用于累加文本内容，以便解析后续问题
+        let accumulatedText = "";
+
         const mcpClients = await mcpClientsManager.getClients();
         const mcpTools = await mcpClientsManager.tools();
         logger.info(
@@ -333,12 +338,31 @@ export async function POST(request: Request) {
           toolChoice: "auto",
           abortSignal: request.signal,
         });
+
+        // 累加文本内容以便解析后续问题（用于 messageMetadata）
+        (async () => {
+          for await (const chunk of result.fullStream) {
+            if (chunk.type === "text-delta") {
+              accumulatedText += chunk.text;
+            }
+          }
+        })();
+
         result.consumeStream();
         dataStream.merge(
           result.toUIMessageStream({
             messageMetadata: ({ part }) => {
               if (part.type == "finish") {
                 metadata.usage = part.totalUsage;
+
+                // 解析后续问题（使用累加的文本）
+                const followUpQuestions =
+                  parseFollowUpQuestions(accumulatedText);
+
+                if (followUpQuestions.length > 0) {
+                  metadata.followUpQuestions = followUpQuestions;
+                }
+
                 return metadata;
               }
             },
@@ -348,11 +372,33 @@ export async function POST(request: Request) {
 
       generateId: generateUUID,
       onFinish: async ({ responseMessage }) => {
+        // 解析后续问题并保存到数据库
+        const textParts = responseMessage.parts.filter(
+          (p) => p.type === "text",
+        ) as Array<{ type: "text"; text: string }>;
+        const fullText = textParts.map((p) => p.text).join("\n");
+        const followUpQuestions = parseFollowUpQuestions(fullText);
+
+        if (followUpQuestions.length > 0) {
+          metadata.followUpQuestions = followUpQuestions;
+        }
+
+        // 清洗文本中的 XML 标签后再保存
+        const cleanedParts = responseMessage.parts.map((part) => {
+          if (part.type === "text") {
+            return {
+              ...part,
+              text: stripFollowUpQuestionsTags(part.text),
+            };
+          }
+          return part;
+        });
+
         if (responseMessage.id == message.id) {
           await chatRepository.upsertMessage({
             threadId: thread!.id,
             ...responseMessage,
-            parts: responseMessage.parts.map(convertToSavePart),
+            parts: cleanedParts.map(convertToSavePart),
             metadata,
           });
         } else {
@@ -366,7 +412,7 @@ export async function POST(request: Request) {
             threadId: thread!.id,
             role: responseMessage.role,
             id: responseMessage.id,
-            parts: responseMessage.parts.map(convertToSavePart),
+            parts: cleanedParts.map(convertToSavePart),
             metadata,
           });
         }

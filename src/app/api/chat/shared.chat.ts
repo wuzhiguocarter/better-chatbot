@@ -487,3 +487,33 @@ export const convertToSavePart = <T extends UIMessagePart<any, any>>(
     })
     .unwrap();
 };
+
+/**
+ * 从 AI 回复文本中解析后续问题
+ * 提取 <fq><q>...</q></fq> 标签中的问题
+ */
+export function parseFollowUpQuestions(text: string): string[] {
+  const fqMatch = text.match(/<fq>([\s\S]*?)<\/fq>/);
+  if (!fqMatch) return [];
+
+  const questions: string[] = [];
+  const qRegex = /<q>(.*?)<\/q>/g;
+  let match;
+
+  while ((match = qRegex.exec(fqMatch[1])) !== null) {
+    const question = match[1].trim();
+    if (question) {
+      questions.push(question);
+    }
+  }
+
+  return questions.slice(0, 5); // 最多返回 5 个问题
+}
+
+/**
+ * 清洗文本中的后续问题 XML 标签
+ * 用于保存消息前移除 XML 标签，避免显示给用户
+ */
+export function stripFollowUpQuestionsTags(text: string): string {
+  return text.replace(/<fq>[\s\S]*?<\/fq>/g, "").trim();
+}

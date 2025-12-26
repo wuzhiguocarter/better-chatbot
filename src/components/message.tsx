@@ -27,6 +27,7 @@ interface Props {
   isLastMessage?: boolean;
   setMessages?: UseChatHelpers<UIMessage>["setMessages"];
   sendMessage?: UseChatHelpers<UIMessage>["sendMessage"];
+  setInput?: (value: string) => void;
   className?: string;
   addToolResult?: UseChatHelpers<UIMessage>["addToolResult"];
   messageIndex?: number;
@@ -47,6 +48,7 @@ const PurePreviewMessage = ({
   addToolResult,
   messageIndex,
   sendMessage,
+  setInput,
 }: Props) => {
   const isUserMessage = useMemo(() => message.role === "user", [message.role]);
   const partsForDisplay = useMemo(
@@ -117,6 +119,7 @@ const PurePreviewMessage = ({
                   message={message}
                   setMessages={setMessages}
                   sendMessage={sendMessage}
+                  setInput={setInput}
                 />
               );
             }

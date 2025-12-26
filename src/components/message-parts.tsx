@@ -66,6 +66,7 @@ import { notify } from "lib/notify";
 import { ModelProviderIcon } from "ui/model-provider-icon";
 import { appStore } from "@/app/store";
 import { BACKGROUND_COLORS, EMOJI_DATA } from "lib/const";
+import { FollowUpQuestionsPart } from "@/components/message-parts/follow-up-questions-part";
 
 type MessagePart = UIMessage["parts"][number];
 type TextMessagePart = Extract<MessagePart, { type: "text" }>;
@@ -92,6 +93,7 @@ interface AssistMessagePartProps {
   threadId?: string;
   setMessages?: UseChatHelpers<UIMessage>["setMessages"];
   sendMessage?: UseChatHelpers<UIMessage>["sendMessage"];
+  setInput?: (value: string) => void;
   isError?: boolean;
   readonly?: boolean;
 }
@@ -297,6 +299,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
   setMessages,
   readonly,
   sendMessage,
+  setInput,
 }: AssistMessagePartProps) {
   const { copied, copy } = useCopy();
   const [isLoading, setIsLoading] = useState(false);
@@ -305,9 +308,52 @@ export const AssistMessagePart = memo(function AssistMessagePart({
   const ref = useRef<HTMLDivElement>(null);
   const metadata = message.metadata as ChatMetadata | undefined;
 
+  // 本地状态：实时解析的后续问题（用于增量渲染）
+  const [streamFollowUpQuestions, setStreamFollowUpQuestions] = useState<
+    string[]
+  >([]);
+
+  // 当原始文本更新时，实时解析后续问题
+  useEffect(() => {
+    if (part.text) {
+      const questions = parseFollowUpQuestionsFromText(part.text);
+      if (questions.length > 0) {
+        setStreamFollowUpQuestions(questions);
+      }
+    }
+  }, [part.text]);
+
+  // 清理文本中的后续问题 XML 标签
+  const cleanedText = useMemo(() => {
+    return part.text.replace(/<fq>[\s\S]*?<\/fq>/g, "").trim();
+  }, [part.text]);
+
+  // 使用 metadata 中的问题（最终版本）或本地解析的问题（流式版本）
+  const followUpQuestions =
+    metadata?.followUpQuestions || streamFollowUpQuestions;
+
   const agent = useMemo(() => {
     return agentList.find((a) => a.id === metadata?.agentId);
   }, [metadata, agentList]);
+
+  // 辅助函数：从文本中解析后续问题
+  function parseFollowUpQuestionsFromText(text: string): string[] {
+    const fqMatch = text.match(/<fq>([\s\S]*?)<\/fq>/);
+    if (!fqMatch) return [];
+
+    const questions: string[] = [];
+    const qRegex = /<q>(.*?)<\/q>/g;
+    let match;
+
+    while ((match = qRegex.exec(fqMatch[1])) !== null) {
+      const question = match[1].trim();
+      if (question) {
+        questions.push(question);
+      }
+    }
+
+    return questions.slice(0, 5);
+  }
 
   const deleteMessage = useCallback(async () => {
     if (!setMessages) return;
@@ -374,7 +420,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
           "opacity-50 border border-destructive bg-card rounded-lg": isError,
         })}
       >
-        <Markdown>{part.text}</Markdown>
+        <Markdown>{cleanedText}</Markdown>
       </div>
       {showActions && (
         <div className="flex w-full">
@@ -385,7 +431,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
                 variant="ghost"
                 size="icon"
                 className="size-3! p-4!"
-                onClick={() => copy(part.text)}
+                onClick={() => copy(cleanedText)}
               >
                 {copied ? <Check /> : <Copy />}
               </Button>
@@ -581,6 +627,12 @@ export const AssistMessagePart = memo(function AssistMessagePart({
             </Tooltip>
           )}
         </div>
+      )}
+      {showActions && followUpQuestions && setInput && (
+        <FollowUpQuestionsPart
+          questions={followUpQuestions}
+          onQuestionClick={setInput}
+        />
       )}
       <div ref={ref} className="min-w-0" />
     </div>
