@@ -360,10 +360,20 @@ export class MCPClient {
       if (this.status === "authorizing") {
         throw new Error("OAuth authorization required. Try Refresh MCP Client");
       }
-      return client?.callTool({
-        name: toolName,
-        arguments: input as Record<string, unknown>,
-      });
+      return client?.callTool(
+        {
+          name: toolName,
+          arguments: input as Record<string, unknown>,
+        },
+        undefined,
+        {
+          timeout: MCP_MAX_TOTAL_TIMEOUT,
+          resetTimeoutOnProgress: true, // 每次收到进度通知时重置超时
+          onprogress: (progress) => {
+            console.log("Progress:", progress);
+          },
+        },
+      );
     };
     return safe(() => this.logger.info("tool call", toolName))
       .ifOk(() => this.scheduleAutoDisconnect()) // disconnect if autoDisconnectSeconds is set
