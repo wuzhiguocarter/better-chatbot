@@ -86,12 +86,14 @@ graph TD
 |---------|---------|--------|----------|
 | `src/app/(auth)` | 用户认证系统 | Better Auth | `layout.tsx` |
 | `src/app/(chat)` | 聊天应用核心 | Next.js, React | `page.tsx` |
+| `src/app/api/chat` | 聊天 API 路由 | AI SDK, Next.js | `route.ts` |
 | `src/components/chat` | 聊天界面组件 | React, Tailwind | `chat-bot.tsx` |
 | `src/lib/ai` | AI 核心功能 | AI SDK, MCP | `models.ts` |
 | `src/lib/auth` | 认证业务逻辑 | Better Auth | `config.ts` |
 | `src/lib/db` | 数据库操作 | Drizzle ORM | `schema.pg.ts` |
 | `src/lib/ai/tools` | 内置工具集 | TypeScript | `index.ts` |
 | `src/lib/ai/workflow` | 工作流引擎 | TypeScript | `executor/` |
+| `docs/architecture` | 架构文档 | Markdown | `message-data-flow.md` |
 | `tests` | 端到端测试 | Playwright | `*.spec.ts` |
 
 ## 运行与开发
@@ -202,9 +204,29 @@ tests/
 ### 项目结构理解
 1. **认证模块** (`src/app/(auth)`)：处理用户登录、注册
 2. **聊天核心** (`src/app/(chat)`)：主要的聊天功能
-3. **AI 集成** (`src/lib/ai`)：模型管理和工具集成
-4. **数据库** (`src/lib/db`)：数据持久化
-5. **组件库** (`src/components/ui`)：可复用组件
+3. **聊天 API** (`src/app/api/chat`)：消息处理和 AI 集成
+4. **AI 集成** (`src/lib/ai`)：模型管理和工具集成
+5. **数据库** (`src/lib/db`)：数据持久化
+6. **组件库** (`src/components/ui`)：可复用组件
+
+### 消息数据流转
+消息从前端用户输入到发送给 LLM API 的完整流转过程：
+
+**详细文档**: [消息数据流转全链路分析](./docs/architecture/message-data-flow.md)
+
+**流转概览**:
+1. **前端输入** → 用户在输入框输入消息和附件
+2. **消息构建** → 构建 `UIMessage` 格式
+3. **API 接收** → 后端接收并验证请求
+4. **工具加载** → 加载 MCP/工作流/默认工具
+5. **格式转换** → `convertToModelMessages()` 转换为模型格式
+6. **模型调用** → 发送给 LLM API 并流式返回响应
+
+**关键文件**:
+- [src/components/prompt-input.tsx](src/components/prompt-input.tsx) - 消息构建
+- [src/app/api/chat/route.ts](src/app/api/chat/route.ts) - API 处理
+- [src/lib/ai/models.ts](src/lib/ai/models.ts) - 模型管理
+- [src/lib/ai/prompts.ts](src/lib/ai/prompts.ts) - 提示词构建
 
 ### 常见任务
 1. **添加新的 AI 提供商**：修改 `src/lib/ai/models.ts`
@@ -212,6 +234,7 @@ tests/
 3. **添加新页面**：在 `src/app/` 相应目录添加路由
 4. **数据库迁移**：修改 schema 后运行 `pnpm db:generate`
 5. **添加测试**：在 `tests/` 相应目录添加测试文件
+6. **理解消息流转**：查看 [消息数据流转文档](./docs/architecture/message-data-flow.md)
 
 ### 重要注意事项
 - 所有 API 路由都在 `src/app/api/` 目录
@@ -219,11 +242,13 @@ tests/
 - MCP 服务器配置支持数据库和文件两种模式
 - 使用 SWR 进行客户端数据获取
 - 国际化文件在 `messages/` 目录
+- 消息格式使用 Vercel AI SDK 的 `UIMessage` 和 `ModelMessage` 类型
 
 ## 相关链接
 - [项目 README](./README.md)
 - [贡献指南](./CONTRIBUTING.md)
 - [变更日志](./CHANGELOG.md)
+- [消息数据流转文档](./docs/architecture/message-data-flow.md) - 消息处理的完整流程
 - [Docker 部署指南](./docs/tips-guides/docker.md)
 - [Vercel 部署指南](./docs/tips-guides/vercel.md)
 - [MCP 服务器设置](./docs/tips-guides/mcp-server-setup-and-tool-testing.md)

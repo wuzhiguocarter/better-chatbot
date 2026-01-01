@@ -78,6 +78,187 @@ export const initMCPManager = async () => {
 };
 ```
 
+## 消息处理流程
+
+### 概述
+
+AI 核心模块负责将用户输入的消息转换为各个 LLM 提供商可以理解的格式，并处理流式响应。详细的消息流转过程请参考 [消息数据流转文档](../../../docs/architecture/message-data-flow.md)。
+
+### 数据转换关键点
+
+#### 1. 消息格式转换
+
+**核心函数**: `convertToModelMessages()` (由 Vercel AI SDK 提供)
+
+```typescript
+// 来自 src/app/api/chat/route.ts
+import { convertToModelMessages, streamText } from "ai";
+
+// TYPE-CONVERSION: UIMessage[] → ModelMessage[]
+const result = streamText({
+  model: customModelProvider.getModel(chatModel),
+  system: systemPrompt,
+  messages: convertToModelMessages(messages),  // 关键转换点
+  tools: vercelAITools,
+});
+```
+
+**转换说明**:
+- **UIMessage**: 项目内部使用的消息格式，包含 `id`、`parts`、`metadata` 等字段
+- **ModelMessage**: LLM API 标准格式，使用 `role` 和 `content` 字段
+
+#### 2. 提供商特定转换
+
+不同 AI 提供商需要不同的消息格式转换：
+
+##### Anthropic (@ai-sdk/anthropic)
+- 文件类型: `type: "file"` → Anthropic 特定格式
+- 工具调用: `toolName` → `name`, `args` → `input`
+- 流式事件: 解析 Anthropic SSE 格式
+
+##### OpenAI (@ai-sdk/openai)
+- 工具调用: 保持 `toolName` 和 `args` 格式
+- 函数调用: 支持旧版 function calling 格式
+- 流式响应: 处理 OpenAI 特定的 delta 格式
+
+##### Google (@ai-sdk/google)
+- 内容块: `content` → `contents[]`
+- 工具使用: `function_call` 格式
+- 安全过滤: 处理 Google 特定的安全设置
+
+#### 3. 系统提示词构建
+
+**文件**: [prompts.ts](prompts.ts)
+
+```typescript
+export const buildUserSystemPrompt = (
+  user?: User,
+  userPreferences?: UserPreferences,
+  agent?: Agent,
+) => {
+  let prompt = `You are ${assistantName}`;
+
+  // 添加代理角色和指令
+  if (agent?.instructions?.systemPrompt) {
+    prompt += `\n<core_capabilities>\n${agent.instructions.systemPrompt}\n</core_capabilities>`;
+  }
+
+  // 添加用户信息
+  if (user?.name) {
+    prompt += `\n<user_information>\nName: ${user.name}\n</user_information>`;
+  }
+
+  return prompt;
+};
+```
+
+### 工具系统集成
+
+#### 工具加载流程
+
+工具系统在 [src/app/api/chat/route.ts](../../app/api/chat/route.ts) 中加载：
+
+```typescript
+// 1. MCP 工具（外部服务集成）
+const MCP_TOOLS = await loadMcpTools({ mentions, allowedMcpServers });
+
+// 2. 工作流工具（自定义工作流）
+const WORKFLOW_TOOLS = await loadWorkFlowTools({ mentions, dataStream });
+
+// 3. 默认工具（内置功能）
+const APP_DEFAULT_TOOLS = await loadAppDefaultTools({
+  mentions,
+  allowedAppDefaultToolkit,
+});
+
+// 4. 合并所有工具
+const vercelAITools = {
+  ...MCP_TOOLS,
+  ...WORKFLOW_TOOLS,
+  ...APP_DEFAULT_TOOLS,
+};
+```
+
+#### 工具类型定义
+
+```typescript
+// Vercel AI SDK 工具格式
+type Tool<TInput extends z.ZodTypeAny = z.ZodTypeAny> = {
+  description: string;
+  inputSchema: TInput;
+  execute: (params: z.infer<TInput>) => Promise<any>;
+};
+```
+
+#### 工具调用生命周期
+
+1. **工具定义**: 工具注册到 `vercelAITools` 对象
+2. **发送给 LLM**: 工具定义随消息一起发送给模型
+3. **LLM 决策**: 模型决定是否使用工具
+4. **执行工具**: AI SDK 调用工具的 `execute` 函数
+5. **返回结果**: 工具结果作为新消息发送回 LLM
+6. **最终响应**: LLM 基于工具结果生成响应
+
+### 流式响应处理
+
+#### 流式转换
+
+```typescript
+// 平滑流式响应
+experimental_transform: smoothStream({ chunking: "word" })
+
+// 消费流式响应
+result.consumeStream();
+
+// 转换为 UI 消息流
+dataStream.merge(
+  result.toUIMessageStream({
+    messageMetadata: ({ part }) => {
+      if (part.type == "finish") {
+        metadata.usage = part.totalUsage;
+        return metadata;
+      }
+    },
+  })
+);
+```
+
+#### Server-Sent Events (SSE)
+
+API 使用 SSE 协议将流式响应发送到前端：
+
+```typescript
+return new Response(dataStream.value, {
+  headers: {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  },
+});
+```
+
+### 监控与追踪
+
+#### Langfuse 集成
+
+```typescript
+experimental_telemetry: {
+  isEnabled: true,  // 发送遥测数据到 Langfuse
+}
+```
+
+#### Sentry 错误捕获
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+
+try {
+  // AI 处理逻辑
+} catch (error) {
+  Sentry.captureException(error);
+}
+```
+
 ## 对外接口
 
 ### 模型提供者接口
