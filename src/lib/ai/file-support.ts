@@ -21,6 +21,8 @@ export const ANTHROPIC_FILE_MIME_TYPES = [
 
 export const XAI_FILE_MIME_TYPES = [...DEFAULT_FILE_PART_MIME_TYPES] as const;
 
+export const ZHIPU_FILE_MIME_TYPES = [...DEFAULT_FILE_PART_MIME_TYPES] as const;
+
 const DEFAULT_FILE_PART_MIME_SET = new Set<string>(
   DEFAULT_FILE_PART_MIME_TYPES,
 );

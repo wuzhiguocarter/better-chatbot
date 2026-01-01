@@ -7,6 +7,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { xai } from "@ai-sdk/xai";
 import { LanguageModelV2, openrouter } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
+import { createZhipu } from "@wuzhiguocarter/zhipu-ai-provider";
 import { LanguageModel } from "ai";
 import {
   createOpenAICompatibleModels,
@@ -19,6 +20,7 @@ import {
   GEMINI_FILE_MIME_TYPES,
   ANTHROPIC_FILE_MIME_TYPES,
   XAI_FILE_MIME_TYPES,
+  ZHIPU_FILE_MIME_TYPES,
 } from "./file-support";
 
 const ollama = createOllama({
@@ -27,6 +29,11 @@ const ollama = createOllama({
 const groq = createGroq({
   baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY,
+});
+
+const zhipu = createZhipu({
+  baseURL: process.env.ZHIPU_BASE_URL || "https://open.bigmodel.cn/api/paas/v4",
+  apiKey: process.env.ZHIPU_API_KEY,
 });
 
 const staticModels = {
@@ -77,6 +84,10 @@ const staticModels = {
     "deepseek-v3:free": openrouter("deepseek/deepseek-chat-v3-0324:free"),
     "gemini-2.0-flash-exp:free": openrouter("google/gemini-2.0-flash-exp:free"),
   },
+  zhipu: {
+    "glm-4.7": zhipu("glm-4.7"),
+    "glm-4.6v": zhipu("glm-4.6v"),
+  },
 };
 
 const staticUnsupportedModels = new Set([
@@ -96,6 +107,7 @@ const staticSupportImageInputModels = {
   ...staticModels.xai,
   ...staticModels.openai,
   ...staticModels.anthropic,
+  ...staticModels.zhipu,
 };
 
 const staticFilePartSupportByModel = new Map<
@@ -150,6 +162,8 @@ registerFileSupport(
   staticModels.openRouter["gemini-2.0-flash-exp:free"],
   GEMINI_FILE_MIME_TYPES,
 );
+
+registerFileSupport(staticModels.zhipu["glm-4.6v"], ZHIPU_FILE_MIME_TYPES);
 
 const openaiCompatibleProviders = openaiCompatibleModelsSafeParse(
   process.env.OPENAI_COMPATIBLE_DATA,
@@ -218,6 +232,9 @@ function checkProviderAPIKey(provider: keyof typeof staticModels) {
       break;
     case "openRouter":
       key = process.env.OPENROUTER_API_KEY;
+      break;
+    case "zhipu":
+      key = process.env.ZHIPU_API_KEY;
       break;
     default:
       return true; // assume the provider has an API key

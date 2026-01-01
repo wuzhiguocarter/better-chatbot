@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 2333",
+    "dev": "NODE_OPTIONS='--inspect' next dev --port 2333",
     "dev:turbopack": "next dev --turbopack",
     "dev:https": "next dev --experimental-https",
     "build": "next build",
@@ -89,6 +89,7 @@
     "@tiptap/starter-kit": "^2.27.1",
     "@tiptap/suggestion": "^2.27.1",
     "@vercel/blob": "^2.0.0",
+    "@wuzhiguocarter/zhipu-ai-provider": "^0.2.3",
     "@xyflow/react": "^12.9.3",
     "ai": "^5.0.102",
     "bcrypt-ts": "^7.1.0",
