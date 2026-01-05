@@ -16,6 +16,7 @@ import logger from "logger";
 import { userRepository } from "lib/db/repository";
 import { DEFAULT_USER_ROLE, USER_ROLES } from "app-types/roles";
 import { admin, editor, user, ac } from "./roles";
+import { resolveTenantId } from "./tenant";
 
 const {
   emailAndPasswordEnabled,
@@ -62,7 +63,14 @@ const options = {
         before: async (user) => {
           // This hook ONLY runs during user creation (sign-up), not on sign-in
           // Use our optimized getIsFirstUser function with caching
-          const isFirstUser = await getIsFirstUser();
+          let tenantId = resolveTenantId();
+          try {
+            tenantId = resolveTenantId(await headers());
+          } catch {
+            tenantId = resolveTenantId();
+          }
+
+          const isFirstUser = await getIsFirstUser(tenantId);
 
           // Set role based on whether this is the first user
           const role = isFirstUser ? USER_ROLES.ADMIN : DEFAULT_USER_ROLE;
@@ -75,6 +83,7 @@ const options = {
             data: {
               ...user,
               role,
+              tenantId: user.tenantId ?? tenantId,
             },
           };
         },
@@ -121,11 +130,19 @@ export const auth = betterAuth({
 
 export const getSession = async () => {
   try {
+    const requestHeaders = await headers();
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: requestHeaders,
     });
     if (!session) {
       logger.error("No session found");
+      return null;
+    }
+    const tenantId = resolveTenantId(requestHeaders);
+    if (session.user?.tenantId && session.user.tenantId !== tenantId) {
+      logger.warn(
+        `Tenant mismatch for session ${session.session.id}: expected ${tenantId}, got ${session.user.tenantId}`,
+      );
       return null;
     }
     return session;
@@ -136,30 +153,36 @@ export const getSession = async () => {
 };
 
 // Cache the first user check to avoid repeated DB queries
-let isFirstUserCache: boolean | null = null;
+let isFirstUserCache: Record<string, boolean> | null = null;
 
-export const getIsFirstUser = async () => {
+export const getIsFirstUser = async (tenantId: string) => {
   // If we already know there's at least one user, return false immediately
   // This in-memory cache prevents any DB calls once we know users exist
-  if (isFirstUserCache === false) {
+  if (isFirstUserCache?.[tenantId] === false) {
     return false;
   }
 
   try {
     // Direct database query - simple and reliable
-    const userCount = await userRepository.getUserCount();
+    const userCount = await userRepository.getUserCount(tenantId);
     const isFirstUser = userCount === 0;
 
     // Once we have at least one user, cache it permanently in memory
     if (!isFirstUser) {
-      isFirstUserCache = false;
+      isFirstUserCache = {
+        ...(isFirstUserCache ?? {}),
+        [tenantId]: false,
+      };
     }
 
     return isFirstUser;
   } catch (error) {
     logger.error("Error checking if first user:", error);
     // Cache as false on error to prevent repeated attempts
-    isFirstUserCache = false;
+    isFirstUserCache = {
+      ...(isFirstUserCache ?? {}),
+      [tenantId]: false,
+    };
     return false;
   }
 };

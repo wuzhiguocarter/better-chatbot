@@ -11,6 +11,7 @@ export interface AdminUsersQuery {
   filterField?: string;
   filterValue?: string | number | boolean;
   filterOperator?: "lt" | "eq" | "ne" | "lte" | "gt" | "gte" | "contains";
+  tenantId?: string;
 }
 
 // Better Auth's UserWithRole type - minimal definition for list view

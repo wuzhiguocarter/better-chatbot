@@ -1,13 +1,16 @@
 "use server";
 
 import { auth } from "@/lib/auth/server";
+import { resolveTenantId } from "@/lib/auth/tenant";
 import { BasicUser, UserZodSchema } from "app-types/user";
 import { userRepository } from "lib/db/repository";
 import { ActionState } from "lib/action-utils";
 import { headers } from "next/headers";
 
 export async function existsByEmailAction(email: string) {
-  const exists = await userRepository.existsByEmail(email);
+  const requestHeaders = await headers();
+  const tenantId = resolveTenantId(requestHeaders);
+  const exists = await userRepository.existsByEmail(email, tenantId);
   return exists;
 }
 
@@ -28,13 +31,16 @@ export async function signUpAction(data: {
     };
   }
   try {
+    const requestHeaders = await headers();
+    const tenantId = resolveTenantId(requestHeaders);
     const { user } = await auth.api.signUpEmail({
       body: {
         email: parsedData.email,
         password: parsedData.password,
         name: parsedData.name,
+        tenantId,
       },
-      headers: await headers(),
+      headers: requestHeaders,
     });
     return {
       user,

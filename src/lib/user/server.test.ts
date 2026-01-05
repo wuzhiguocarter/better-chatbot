@@ -53,7 +53,7 @@ describe("User Server", () => {
   describe("getUserAccounts - Account Type Detection", () => {
     beforeEach(() => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "user-1" },
+        user: { id: "user-1", role: "user", tenantId: "tenant-1" },
       } as any);
       vi.mocked(headers).mockResolvedValue(new Headers());
     });
@@ -121,7 +121,13 @@ describe("User Server", () => {
   describe("getUserIdAndCheckAccess - Access Control Logic", () => {
     it("should use requested user ID when provided", async () => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "current-user" },
+        user: { id: "current-user", role: "admin", tenantId: "tenant-1" },
+      } as any);
+      const userRepositoryModule = await import("lib/db/repository");
+      vi.mocked(
+        userRepositoryModule.userRepository.getUserById,
+      ).mockResolvedValue({
+        id: "target-user",
       } as any);
 
       const result = await getUserIdAndCheckAccess("target-user");
@@ -131,7 +137,7 @@ describe("User Server", () => {
 
     it("should fall back to current user ID when none provided", async () => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "current-user" },
+        user: { id: "current-user", role: "user", tenantId: "tenant-1" },
       } as any);
 
       const result = await getUserIdAndCheckAccess();
@@ -140,7 +146,9 @@ describe("User Server", () => {
     });
 
     it("should call notFound for falsy user IDs", async () => {
-      vi.mocked(getSession).mockResolvedValue({ user: { id: "" } } as any);
+      vi.mocked(getSession).mockResolvedValue({
+        user: { id: "", role: "user", tenantId: "tenant-1" },
+      } as any);
 
       await getUserIdAndCheckAccess();
 
@@ -149,7 +157,7 @@ describe("User Server", () => {
 
     it("should handle null/undefined gracefully", async () => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "fallback-user" },
+        user: { id: "fallback-user", role: "user", tenantId: "tenant-1" },
       } as any);
 
       const result1 = await getUserIdAndCheckAccess(null as any);
@@ -157,6 +165,16 @@ describe("User Server", () => {
 
       expect(result1).toBe("fallback-user");
       expect(result2).toBe("fallback-user");
+    });
+
+    it("should reject non-admin access to other users", async () => {
+      vi.mocked(getSession).mockResolvedValue({
+        user: { id: "current-user", role: "user", tenantId: "tenant-1" },
+      } as any);
+
+      await getUserIdAndCheckAccess("target-user");
+
+      expect(notFound).toHaveBeenCalled();
     });
   });
 
@@ -170,7 +188,7 @@ describe("User Server", () => {
 
     beforeEach(() => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "current-user" },
+        user: { id: "user-1", role: "user", tenantId: "tenant-1" },
       } as any);
     });
 
