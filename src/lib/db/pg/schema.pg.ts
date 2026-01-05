@@ -100,6 +100,7 @@ export const UserTable = pgTable("user", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  tenantId: text("tenant_id").notNull().default("default"),
   emailVerified: boolean("email_verified").default(false).notNull(),
   password: text("password"),
   image: text("image"),

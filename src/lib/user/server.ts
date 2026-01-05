@@ -7,6 +7,7 @@ import { userRepository } from "lib/db/repository";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { customModelProvider } from "@/lib/ai/models";
+import { getIsUserAdmin } from "./utils";
 
 // Helper function to get model provider from model name
 const getModelProvider = (modelName: string): string => {
@@ -85,6 +86,18 @@ export async function getUserIdAndCheckAccess(
   const userId = requestedUserId ? requestedUserId : currentUserId;
   if (!userId) {
     notFound();
+  }
+  if (requestedUserId && requestedUserId !== currentUserId) {
+    if (!getIsUserAdmin(session.user)) {
+      notFound();
+    }
+    const targetUser = await userRepository.getUserById(
+      requestedUserId,
+      session.user.tenantId,
+    );
+    if (!targetUser) {
+      notFound();
+    }
   }
   return userId;
 }

@@ -12,7 +12,7 @@ import {
   SessionTable,
   UserTable,
 } from "../schema.pg";
-import { count, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, count, eq, getTableColumns, sql } from "drizzle-orm";
 
 // Helper function to get user columns without password
 const getUserColumnsWithoutPassword = () => {
@@ -21,11 +21,15 @@ const getUserColumnsWithoutPassword = () => {
 };
 
 export const pgUserRepository: UserRepository = {
-  existsByEmail: async (email: string): Promise<boolean> => {
+  existsByEmail: async (email: string, tenantId?: string): Promise<boolean> => {
     const result = await db
       .select()
       .from(UserTable)
-      .where(eq(UserTable.email, email));
+      .where(
+        tenantId
+          ? and(eq(UserTable.email, email), eq(UserTable.tenantId, tenantId))
+          : eq(UserTable.email, email),
+      );
     return result.length > 0;
   },
   updateUserDetails: async ({
@@ -81,6 +85,7 @@ export const pgUserRepository: UserRepository = {
   },
   getUserById: async (
     userId: string,
+    tenantId?: string,
   ): Promise<BasicUserWithLastLogin | null> => {
     const [result] = await pgDb
       .select({
@@ -92,13 +97,20 @@ export const pgUserRepository: UserRepository = {
         )`.as("lastLogin"),
       })
       .from(UserTable)
-      .where(eq(UserTable.id, userId));
+      .where(
+        tenantId
+          ? and(eq(UserTable.id, userId), eq(UserTable.tenantId, tenantId))
+          : eq(UserTable.id, userId),
+      );
 
     return result || null;
   },
 
-  getUserCount: async () => {
-    const [result] = await db.select({ count: count() }).from(UserTable);
+  getUserCount: async (tenantId?: string) => {
+    const query = db.select({ count: count() }).from(UserTable);
+    const [result] = tenantId
+      ? await query.where(eq(UserTable.tenantId, tenantId))
+      : await query;
     return result?.count ?? 0;
   },
   getUserStats: async (userId: string) => {

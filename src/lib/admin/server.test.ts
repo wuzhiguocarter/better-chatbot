@@ -99,7 +99,7 @@ describe("Admin Server - Business Logic", () => {
     beforeEach(() => {
       // Mock admin session by default
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "admin-1", role: USER_ROLES.ADMIN },
+        user: { id: "admin-1", role: USER_ROLES.ADMIN, tenantId: "tenant-1" },
       } as any);
       // Mock permissions by default
       vi.mocked(canListUsers).mockResolvedValue(true);
@@ -127,6 +127,7 @@ describe("Admin Server - Business Logic", () => {
         filterField: undefined,
         filterValue: undefined,
         filterOperator: undefined,
+        tenantId: "tenant-1",
       });
     });
 
@@ -157,6 +158,7 @@ describe("Admin Server - Business Logic", () => {
           sortDirection: "asc",
           searchValue: "john",
           searchField: "email",
+          tenantId: "tenant-1",
         }),
       );
     });
@@ -218,7 +220,7 @@ describe("Admin Server - Business Logic", () => {
 
     it("should enforce admin access before making API call", async () => {
       vi.mocked(getSession).mockResolvedValue({
-        user: { id: "user-1", role: USER_ROLES.USER },
+        user: { id: "user-1", role: USER_ROLES.USER, tenantId: "tenant-1" },
       } as any);
       vi.mocked(canListUsers).mockResolvedValue(false);
       vi.mocked(requireUserListPermission).mockRejectedValue(

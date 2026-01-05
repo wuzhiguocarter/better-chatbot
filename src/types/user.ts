@@ -43,7 +43,7 @@ export type UserSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 export type UserSessionUser = UserSession["user"];
 
 export type UserRepository = {
-  existsByEmail: (email: string) => Promise<boolean>;
+  existsByEmail: (email: string, tenantId?: string) => Promise<boolean>;
   updateUserDetails: (data: {
     userId: string;
     name?: string;
@@ -56,8 +56,11 @@ export type UserRepository = {
     preferences: UserPreferences,
   ) => Promise<User>;
   getPreferences: (userId: string) => Promise<UserPreferences | null>;
-  getUserById: (userId: string) => Promise<BasicUserWithLastLogin | null>;
-  getUserCount: () => Promise<number>;
+  getUserById: (
+    userId: string,
+    tenantId?: string,
+  ) => Promise<BasicUserWithLastLogin | null>;
+  getUserCount: (tenantId?: string) => Promise<number>;
   getUserStats: (userId: string) => Promise<{
     threadCount: number;
     messageCount: number;

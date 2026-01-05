@@ -43,12 +43,16 @@ export async function getAdminUsers(
 ): Promise<AdminUsersPaginated> {
   // Use our new permission system
   await requireUserListPermission("list users in admin panel");
-  await getSession();
+  const session = await getSession();
+  if (!session?.user?.tenantId) {
+    throw new Error("Unauthorized: No tenant available");
+  }
 
   try {
     // Use our custom repository with improved search
     const result = await pgAdminRepository.getUsers({
       ...query,
+      tenantId: session.user.tenantId,
       limit: query?.limit ?? ADMIN_USER_LIST_LIMIT,
       offset: query?.offset ?? 0,
       sortBy: query?.sortBy ?? DEFAULT_SORT_BY,

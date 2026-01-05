@@ -34,6 +34,7 @@ const pgAdminRepository: AdminRepository = {
       filterField,
       filterValue,
       filterOperator = "eq",
+      tenantId,
     } = query || {};
 
     // Base query with user columns (excluding password) and last login
@@ -50,6 +51,10 @@ const pgAdminRepository: AdminRepository = {
 
     // Build WHERE conditions
     const whereConditions: any[] = [];
+
+    if (tenantId) {
+      whereConditions.push(eq(UserTable.tenantId, tenantId));
+    }
 
     // Search across multiple fields (case insensitive)
     if (searchValue && searchValue.trim()) {
