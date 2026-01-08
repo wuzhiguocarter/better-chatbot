@@ -35,6 +35,23 @@ interface UserStats {
   active_days: number;
 }
 
+// Token统计相关接口
+interface TokenUsageStats {
+  date: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  message_count: number;
+}
+
+interface OverallTokenStats {
+  total_tokens: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  messages_with_usage: number;
+  avg_tokens_per_message: string;
+}
+
 interface DashboardData {
   totalRegisteredUsers: number;
   activeUsersCount: number;
@@ -50,6 +67,9 @@ interface DashboardData {
   userStats: UserStats[];
   dailyUserStats: UserStats[];
   dailyStats: Array<{ date: string; active_users: number; messages: number }>;
+  // 新增Token统计字段
+  dailyTokenStats: TokenUsageStats[];
+  overallTokenStats: OverallTokenStats;
 }
 
 async function fetchDashboardData(): Promise<DashboardData> {
@@ -202,6 +222,76 @@ async function fetchDashboardData(): Promise<DashboardData> {
     `);
     const dailyUserStats = dailyUserStatsResult.rows;
 
+    // 查询7: 每日Token用量统计（最近30天）
+    const dailyTokenStatsResult = await client.query(`
+      WITH daily_token_usage AS (
+        SELECT
+          DATE(cm.created_at) as date,
+          SUM(
+            COALESCE(
+              (cm.metadata->'usage'->>'inputTokens')::bigint,
+              0
+            )
+          ) as input_tokens,
+          SUM(
+            COALESCE(
+              (cm.metadata->'usage'->>'outputTokens')::bigint,
+              0
+            )
+          ) as output_tokens,
+          SUM(
+            COALESCE(
+              (cm.metadata->'usage'->>'totalTokens')::bigint,
+              0
+            )
+          ) as total_tokens,
+          COUNT(*) as message_count
+        FROM chat_message cm
+        WHERE cm.role = 'assistant'
+          AND cm.metadata IS NOT NULL
+          AND cm.metadata->'usage' IS NOT NULL
+          AND cm.created_at >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY DATE(cm.created_at)
+      )
+      SELECT
+        date,
+        input_tokens,
+        output_tokens,
+        total_tokens,
+        message_count
+      FROM daily_token_usage
+      ORDER BY date ASC
+    `);
+
+    // 查询8: 总体Token统计
+    const overallTokenResult = await client.query(`
+      SELECT
+        SUM(
+          COALESCE(
+            (metadata->'usage'->>'totalTokens')::bigint,
+            0
+          )
+        ) as total_tokens,
+        SUM(
+          COALESCE(
+            (metadata->'usage'->>'inputTokens')::bigint,
+            0
+          )
+        ) as total_input_tokens,
+        SUM(
+          COALESCE(
+            (metadata->'usage'->>'outputTokens')::bigint,
+            0
+          )
+        ) as total_output_tokens,
+        COUNT(*) FILTER (
+          WHERE metadata->'usage' IS NOT NULL
+        ) as messages_with_usage
+      FROM chat_message
+      WHERE role = 'assistant'
+        AND metadata IS NOT NULL
+    `);
+
     // 汇总统计
     const totalThreads = userStats.reduce(
       (sum, row) => sum + parseInt(row.total_threads),
@@ -237,6 +327,32 @@ async function fetchDashboardData(): Promise<DashboardData> {
       userStats: userStats as unknown as UserStats[],
       dailyUserStats: dailyUserStats as unknown as UserStats[],
       dailyStats,
+      // 新增Token统计数据
+      dailyTokenStats: dailyTokenStatsResult.rows.map((row) => ({
+        date: row.date,
+        input_tokens: parseInt(row.input_tokens || 0),
+        output_tokens: parseInt(row.output_tokens || 0),
+        total_tokens: parseInt(row.total_tokens || 0),
+        message_count: parseInt(row.message_count || 0),
+      })),
+      overallTokenStats: {
+        total_tokens: parseInt(overallTokenResult.rows[0].total_tokens || 0),
+        total_input_tokens: parseInt(
+          overallTokenResult.rows[0].total_input_tokens || 0,
+        ),
+        total_output_tokens: parseInt(
+          overallTokenResult.rows[0].total_output_tokens || 0,
+        ),
+        messages_with_usage: parseInt(
+          overallTokenResult.rows[0].messages_with_usage || 0,
+        ),
+        avg_tokens_per_message: overallTokenResult.rows[0].messages_with_usage
+          ? (
+              parseInt(overallTokenResult.rows[0].total_tokens || 0) /
+              parseInt(overallTokenResult.rows[0].messages_with_usage || 1)
+            ).toFixed(1)
+          : "0",
+      },
     };
   } finally {
     await client.end();
@@ -244,7 +360,13 @@ async function fetchDashboardData(): Promise<DashboardData> {
 }
 
 function generateHTML(data: DashboardData): string {
-  const { userStats, dailyUserStats, dailyStats } = data;
+  const {
+    userStats,
+    dailyUserStats,
+    dailyStats,
+    dailyTokenStats,
+    overallTokenStats,
+  } = data;
 
   // 生成图表数据 - 简化日期格式
   const dates = dailyStats
@@ -263,6 +385,19 @@ function generateHTML(data: DashboardData): string {
   const userRoundsData = topUsers
     .map((u) => Math.round(u.conversation_rounds))
     .join(",");
+
+  // Token趋势图表数据
+  const tokenDates = dailyTokenStats
+    .map((s) => {
+      const d = new Date(s.date);
+      return `"${d.getMonth() + 1}/${d.getDate()}"`;
+    })
+    .join(",");
+  const inputTokensData = dailyTokenStats.map((s) => s.input_tokens).join(",");
+  const outputTokensData = dailyTokenStats
+    .map((s) => s.output_tokens)
+    .join(",");
+  const _totalTokensData = dailyTokenStats.map((s) => s.total_tokens).join(",");
 
   // 用户表格行
   const tableRows = userStats
@@ -600,6 +735,26 @@ function generateHTML(data: DashboardData): string {
         <div class="stat-value">${data.totalThreads}</div>
         <div class="stat-sub">消息: ${data.totalMessages} | 轮次: ${Math.round(data.totalRounds)}</div>
       </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+        <div class="stat-label">总Token消耗</div>
+        <div class="stat-value">${(() => {
+          const num = overallTokenStats.total_tokens;
+          if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+          if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+          return num.toString();
+        })()}</div>
+        <div class="stat-sub">输入: ${(() => {
+          const num = overallTokenStats.total_input_tokens;
+          if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+          if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+          return num.toString();
+        })()} | 输出: ${(() => {
+          const num = overallTokenStats.total_output_tokens;
+          if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+          if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+          return num.toString();
+        })()}</div>
+      </div>
     </div>
 
     <!-- 图表区域 -->
@@ -616,6 +771,17 @@ function generateHTML(data: DashboardData): string {
         <div class="chart-container" id="userRankContainer">
           <div class="loading-spinner"></div>
           <canvas id="userRankChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Token用量趋势图表区域 -->
+    <div class="charts-grid" style="grid-template-columns: 1fr;">
+      <div class="chart-card">
+        <div class="chart-title">🔥 每日Token用量趋势（最近30天）</div>
+        <div class="chart-container" id="tokenUsageContainer">
+          <div class="loading-spinner"></div>
+          <canvas id="tokenUsageChart"></canvas>
         </div>
       </div>
     </div>
@@ -808,6 +974,112 @@ function generateHTML(data: DashboardData): string {
       }
     });
     hideSpinner('userRankContainer');
+
+    // 数字格式化函数（K/M单位）
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      } else {
+        return num.toString();
+      }
+    }
+
+    // 每日Token用量趋势图
+    const tokenUsageChart = new Chart(document.getElementById('tokenUsageChart'), {
+      type: 'line',
+      data: {
+        labels: [${tokenDates}],
+        datasets: [
+          {
+            label: '输入Token',
+            data: [${inputTokensData}],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y'
+          },
+          {
+            label: '输出Token',
+            data: [${outputTokensData}],
+            borderColor: '#f5576c',
+            backgroundColor: 'rgba(245, 87, 108, 0.1)',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                label += formatNumber(context.parsed.y);
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: '输入Token'
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              callback: function(value) {
+                return formatNumber(value);
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: '输出Token'
+            },
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              callback: function(value) {
+                return formatNumber(value);
+              }
+            }
+          }
+        }
+      }
+    });
+    hideSpinner('tokenUsageContainer');
     });
   </script>
 </body>
