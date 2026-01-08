@@ -60,3 +60,6 @@ local-data
 openai-compatible.config.ts
 certificates
 public/uploads
+# Sentry Config File
+.env.sentry-build-plugin
+.claude/

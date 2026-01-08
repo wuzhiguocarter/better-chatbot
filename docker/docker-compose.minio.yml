@@ -1,0 +1,46 @@
+services:
+  # MinIO 对象存储服务（本地开发环境）
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - '2335:9000'   # API 端口
+      - '2336:9001'   # Console 管理界面端口
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+      - MINIO_BROWSER_REDIRECT_URL=https://s3.fanmikeji.cn/minio/
+    networks:
+      - better-chatbot-networks
+    volumes:
+      - ./minio-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MinIO 客户端 - 用于自动创建 bucket
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      mc mb myminio/better-chatbot --ignore-existing;
+      mc anonymous set download myminio/better-chatbot;
+      echo '✅ MinIO 初始化完成';
+      echo 'Bucket: better-chatbot';
+      echo 'Policy: public download';
+      exit 0;
+      "
+    networks:
+      - better-chatbot-networks
+
+networks:
+  better-chatbot-networks:
+    driver: bridge

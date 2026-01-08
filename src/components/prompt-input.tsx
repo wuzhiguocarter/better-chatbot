@@ -506,7 +506,6 @@ export default function PromptInput({
                   input={input}
                   onChange={setInput}
                   onChangeMention={onChangeMention}
-                  onEnter={submit}
                   placeholder={placeholder ?? t("placeholder")}
                   ref={editorRef}
                   disabledMention={disabledMention}

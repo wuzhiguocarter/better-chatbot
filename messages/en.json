@@ -196,6 +196,9 @@
   "Chat": {
     "Error": "Chat Error",
     "thisMessageWasNotSavedPleaseTryTheChatAgain": "This message was not saved. Please try the chat again.",
+    "FollowUpQuestions": {
+      "title": "Related questions"
+    },
     "uploadImage": "Upload File",
     "generateImage": "Generate Image",
     "imageUploadedSuccessfully": "Image uploaded successfully",

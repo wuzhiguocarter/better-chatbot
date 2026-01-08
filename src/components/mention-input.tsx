@@ -1,5 +1,4 @@
 "use client";
-import { useIsMobile } from "@/hooks/use-mobile";
 import Mention from "@tiptap/extension-mention";
 import {
   EditorContent,
@@ -32,7 +31,6 @@ interface MentionInputProps {
     text: string;
     mentions: { label: string; id: string }[];
   }) => void;
-  onEnter?: () => void;
   placeholder?: string;
   suggestionChar?: string;
   className?: string;
@@ -59,7 +57,6 @@ export default function MentionInput({
   content,
   onChange,
   disabled,
-  onEnter,
   placeholder = "",
   suggestionChar = "@",
   MentionItem,
@@ -71,7 +68,6 @@ export default function MentionInput({
   onBlur,
   fullWidthSuggestion = false,
 }: MentionInputProps) {
-  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const position = useRef<{
     top: number;
@@ -213,24 +209,12 @@ export default function MentionInput({
   }, [disabled]);
 
   // Memoize handlers
+  // 回车键仅用于换行，不触发发送。发送消息需点击发送按钮。
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      const isSubmit =
-        !open &&
-        e.key === "Enter" &&
-        editor?.getText().trim().length &&
-        !e.shiftKey &&
-        !e.metaKey &&
-        !e.nativeEvent.isComposing;
-      if (isSubmit) {
-        e.preventDefault();
-        onEnter?.();
-        if (isMobile) {
-          editor?.commands.blur();
-        }
-      }
+    (_e: React.KeyboardEvent) => {
+      // 不再处理回车键发送消息，回车键保持默认换行行为
     },
-    [editor, onEnter, open],
+    [editor, open],
   );
 
   // Memoize the DOM structure

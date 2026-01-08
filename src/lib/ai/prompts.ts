@@ -129,6 +129,25 @@ ${userPreferences.responseStyleExample}
 </communication_preferences>`;
   }
 
+  prompt += `
+
+### Follow-up Questions
+After your response, suggest 3-5 relevant follow-up questions that the user might want to ask.
+Format them as XML tags at the very end of your response:
+
+<fq>
+  <q>1 follow-up question</q>
+  <q>2 follow-up question</q>
+  <q>3 follow-up question</q>
+</fq>
+
+Guidelines:
+- Questions should be natural, relevant to the current conversation
+- Each question should be concise (under 80 characters)
+- Questions should explore different aspects or dive deeper into the topic
+- Use the same language as the user's message
+- DO NOT include the XML tags in tool calls or code blocks`;
+
   return prompt.trim();
 };
 

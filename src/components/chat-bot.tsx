@@ -194,6 +194,37 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
           (p) => (p as any)?.type === "file",
         );
 
+        // 默认 agent 自动选择逻辑（从环境变量获取）
+        const DEFAULT_AGENT_ID = process.env.NEXT_PUBLIC_DEFAULT_AGENT_ID;
+        const DEFAULT_AGENT_NAME =
+          process.env.NEXT_PUBLIC_DEFAULT_AGENT_NAME || "默认 Agent";
+        const DEFAULT_AGENT_ICON =
+          process.env.NEXT_PUBLIC_DEFAULT_AGENT_ICON ||
+          "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f310.png";
+
+        const DEFAULT_AGENT = DEFAULT_AGENT_ID
+          ? {
+              type: "agent" as const,
+              agentId: DEFAULT_AGENT_ID,
+              name: DEFAULT_AGENT_NAME,
+              icon: {
+                type: "emoji" as const,
+                value: DEFAULT_AGENT_ICON,
+                style: {
+                  backgroundColor: "oklch(87% 0 0)",
+                },
+              },
+              description: "",
+            }
+          : null;
+
+        const currentMentions = latestRef.current.mentions || [];
+        const hasAgent = currentMentions.some((m) => m.type === "agent");
+        const finalMentions =
+          hasAgent || !DEFAULT_AGENT
+            ? currentMentions
+            : [DEFAULT_AGENT, ...currentMentions];
+
         const requestBody: ChatApiSchemaRequestBody = {
           ...body,
           id,
@@ -201,13 +232,13 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
             (body as { model: ChatModel })?.model ?? latestRef.current.model,
           toolChoice: latestRef.current.toolChoice,
           allowedAppDefaultToolkit:
-            latestRef.current.mentions?.length || hasFilePart
+            finalMentions?.length || hasFilePart
               ? []
               : latestRef.current.allowedAppDefaultToolkit,
-          allowedMcpServers: latestRef.current.mentions?.length
+          allowedMcpServers: finalMentions?.length
             ? {}
             : latestRef.current.allowedMcpServers,
-          mentions: latestRef.current.mentions,
+          mentions: finalMentions,
           message: sanitizedLastMessage,
           imageTool: {
             model: latestRef.current.threadImageToolModel[threadId],
@@ -448,6 +479,7 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
                     isLastMessage={isLastMessage}
                     setMessages={setMessages}
                     sendMessage={sendMessage}
+                    setInput={setInput}
                     className={
                       isLastMessage &&
                       message.role != "user" &&

@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -9,9 +11,54 @@ import {
   UIMessage,
 } from "ai";
 
+import {
+  startActiveObservation,
+  updateActiveObservation,
+  updateActiveTrace,
+} from "@langfuse/tracing";
+
 import { customModelProvider, isToolCallUnsupportedModel } from "lib/ai/models";
 
 import { mcpClientsManager } from "lib/ai/mcp/mcp-manager";
+
+// Langfuse 懒加载
+let langfuseSpanProcessor: any = null;
+let langfuseInitPromise: Promise<void> | null = null;
+
+function ensureLangfuse() {
+  if (
+    !langfuseInitPromise &&
+    process.env.LANGFUSE_PUBLIC_KEY &&
+    process.env.LANGFUSE_SECRET_KEY
+  ) {
+    langfuseInitPromise = (async () => {
+      try {
+        const { LangfuseSpanProcessor } = await import("@langfuse/otel");
+        const { NodeTracerProvider } = await import(
+          "@opentelemetry/sdk-trace-node"
+        );
+
+        langfuseSpanProcessor = new LangfuseSpanProcessor({
+          publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+          secretKey: process.env.LANGFUSE_SECRET_KEY,
+          baseUrl:
+            process.env.LANGFUSE_BASE_URL || "https://us.cloud.langfuse.com",
+          shouldExportSpan: () => true,
+        });
+
+        const tracerProvider = new NodeTracerProvider({
+          spanProcessors: [langfuseSpanProcessor],
+        });
+
+        tracerProvider.register();
+        console.log("[chat] Langfuse initialized");
+      } catch (e) {
+        console.error("[chat] Langfuse init failed:", e);
+      }
+    })();
+  }
+  return langfuseInitPromise;
+}
 
 import { agentRepository, chatRepository } from "lib/db/repository";
 import globalLogger from "logger";
@@ -40,6 +87,8 @@ import {
   loadWorkFlowTools,
   loadAppDefaultTools,
   convertToSavePart,
+  parseFollowUpQuestions,
+  stripFollowUpQuestionsTags,
 } from "./shared.chat";
 import {
   rememberAgentAction,
@@ -58,6 +107,9 @@ const logger = globalLogger.withDefaults({
 });
 
 export async function POST(request: Request) {
+  // 确保 Langfuse 已初始化
+  ensureLangfuse();
+
   try {
     const json = await request.json();
 
@@ -205,6 +257,9 @@ export async function POST(request: Request) {
 
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
+        // 用于累加文本内容，以便解析后续问题
+        let accumulatedText = "";
+
         const mcpClients = await mcpClientsManager.getClients();
         const mcpTools = await mcpClientsManager.tools();
         logger.info(
@@ -344,37 +399,130 @@ export async function POST(request: Request) {
         }
         logger.info(`model: ${chatModel?.provider}/${chatModel?.model}`);
 
-        const result = streamText({
-          model,
-          system: systemPrompt,
-          messages: convertToModelMessages(messages),
-          experimental_transform: smoothStream({ chunking: "word" }),
-          maxRetries: 2,
-          tools: vercelAITooles,
-          stopWhen: stepCountIs(10),
-          toolChoice: "auto",
-          abortSignal: request.signal,
-        });
-        result.consumeStream();
-        dataStream.merge(
-          result.toUIMessageStream({
-            messageMetadata: ({ part }) => {
-              if (part.type == "finish") {
-                metadata.usage = part.totalUsage;
-                return metadata;
-              }
-            },
-          }),
+        // 提取用户输入
+        const textPart = message.parts.find(
+          (part: any) => part?.type === "text",
         );
+        const inputText =
+          textPart && "text" in textPart
+            ? (textPart as { text: string }).text
+            : "";
+
+        // 使用 startActiveObservation 创建顶层 span
+        const executeStream = async () => {
+          // 设置 trace 级别信息
+          updateActiveTrace({
+            name: "chat-request",
+            sessionId: id,
+            userId: session.user.id,
+            metadata: {
+              chatModel: `${chatModel?.provider}/${chatModel?.model}`,
+              agentId: agent?.id,
+              agentName: agent?.name,
+              toolChoice,
+            },
+          });
+
+          // 设置 observation 级别输入
+          updateActiveObservation({
+            input: inputText,
+          });
+
+          const result = streamText({
+            model,
+            system: systemPrompt,
+            messages: convertToModelMessages(messages),
+            experimental_transform: smoothStream({ chunking: "word" }),
+            maxRetries: 2,
+            tools: vercelAITooles,
+            stopWhen: stepCountIs(10),
+            toolChoice: "auto",
+            abortSignal: request.signal,
+            // 启用 Vercel AI SDK 的遥测功能，自动发送到 Langfuse
+            experimental_telemetry: {
+              isEnabled: true,
+            },
+          });
+
+          // 累加文本内容以便解析后续问题
+          (async () => {
+            for await (const chunk of result.fullStream) {
+              if (chunk.type === "text-delta") {
+                accumulatedText += chunk.text;
+              }
+            }
+
+            // stream 完全结束后，更新输出到 Langfuse
+            updateActiveObservation({
+              output: accumulatedText,
+            });
+            updateActiveTrace({
+              output: accumulatedText,
+            });
+          })();
+
+          result.consumeStream();
+          dataStream.merge(
+            result.toUIMessageStream({
+              messageMetadata: ({ part }) => {
+                if (part.type == "finish") {
+                  metadata.usage = part.totalUsage;
+
+                  // 解析后续问题（使用累加的文本）
+                  const followUpQuestions =
+                    parseFollowUpQuestions(accumulatedText);
+
+                  if (followUpQuestions.length > 0) {
+                    metadata.followUpQuestions = followUpQuestions;
+                  }
+
+                  return metadata;
+                }
+              },
+            }),
+          );
+
+          return result;
+        };
+
+        if (langfuseSpanProcessor) {
+          await startActiveObservation("chat-generation", executeStream, {
+            endOnExit: true,
+          });
+        } else {
+          await executeStream();
+        }
       },
 
       generateId: generateUUID,
       onFinish: async ({ responseMessage }) => {
+        // 解析后续问题并保存到数据库
+        const textParts = responseMessage.parts.filter(
+          (p) => p.type === "text",
+        ) as Array<{ type: "text"; text: string }>;
+        const fullText = textParts.map((p) => p.text).join("\n");
+        const followUpQuestions = parseFollowUpQuestions(fullText);
+
+        if (followUpQuestions.length > 0) {
+          metadata.followUpQuestions = followUpQuestions;
+        }
+
+        // 清洗文本中的 XML 标签后再保存
+        const cleanedParts = responseMessage.parts.map((part) => {
+          if (part.type === "text") {
+            return {
+              ...part,
+              text: stripFollowUpQuestionsTags(part.text),
+            };
+          }
+          return part;
+        });
+
         if (responseMessage.id == message.id) {
           await chatRepository.upsertMessage({
             threadId: thread!.id,
             ...responseMessage,
-            parts: responseMessage.parts.map(convertToSavePart),
+            parts: cleanedParts.map(convertToSavePart),
             metadata,
           });
         } else {
@@ -388,7 +536,7 @@ export async function POST(request: Request) {
             threadId: thread!.id,
             role: responseMessage.role,
             id: responseMessage.id,
-            parts: responseMessage.parts.map(convertToSavePart),
+            parts: cleanedParts.map(convertToSavePart),
             metadata,
           });
         }
@@ -403,11 +551,34 @@ export async function POST(request: Request) {
       originalMessages: messages,
     });
 
+    // 在请求完成后刷新 Langfuse span 数据
+    if (langfuseSpanProcessor) {
+      after(async () => {
+        try {
+          await langfuseSpanProcessor.forceFlush();
+        } catch (e) {
+          console.error("[chat] Failed to flush Langfuse:", e);
+        }
+      });
+    }
+
     return createUIMessageStreamResponse({
       stream,
     });
   } catch (error: any) {
     logger.error(error);
+
+    // 发生错误时也要刷新 span 数据
+    if (langfuseSpanProcessor) {
+      after(async () => {
+        try {
+          await langfuseSpanProcessor.forceFlush();
+        } catch (e) {
+          console.error("[chat] Failed to flush Langfuse on error:", e);
+        }
+      });
+    }
+
     return Response.json({ message: error.message }, { status: 500 });
   }
 }

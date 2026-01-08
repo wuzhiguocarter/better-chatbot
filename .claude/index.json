@@ -1,0 +1,163 @@
+{
+  "scanTimestamp": "2025-12-19T11:01:32+08:00",
+  "projectName": "better-chatbot",
+  "version": "1.26.0",
+  "description": "An open-source AI chatbot with multi-provider support, MCP protocol, and workflow automation",
+  "scanSummary": {
+    "totalFiles": 637,
+    "scannedFiles": 48,
+    "coveragePercentage": 7.5,
+    "truncated": false,
+    "ignoredFiles": 589
+  },
+  "modules": [
+    {
+      "path": "src/app/(chat)",
+      "name": "聊天核心模块",
+      "description": "聊天应用的核心功能，包含聊天界面、代理管理、工作流编辑器",
+      "entry": "page.tsx",
+      "keyFiles": ["layout.tsx", "page.tsx", "swr-config.tsx"],
+      "subModules": ["agents", "workflow", "mcp", "chat", "archive", "admin"],
+      "coverage": {
+        "interfaces": true,
+        "dependencies": true,
+        "tests": false,
+        "dataModels": true
+      },
+      "gaps": ["缺少详细的子模块文档", "API 路由文档待补充"]
+    },
+    {
+      "path": "src/lib/ai",
+      "name": "AI 核心模块",
+      "description": "AI 功能的核心实现，包括模型管理、MCP 协议、工具系统、工作流引擎",
+      "entry": "models.ts",
+      "keyFiles": [
+        "models.ts",
+        "mcp-manager.ts",
+        "tools/index.ts",
+        "workflow/executor/workflow-executor.ts"
+      ],
+      "subModules": ["agent", "mcp", "tools", "workflow", "speech"],
+      "coverage": {
+        "interfaces": true,
+        "dependencies": true,
+        "tests": true,
+        "dataModels": true
+      },
+      "gaps": ["语音功能模块文档待完善", "Azure OpenAI 集成细节待补充"]
+    },
+    {
+      "path": "src/lib/db",
+      "name": "数据库模块",
+      "description": "数据持久化层，使用 Drizzle ORM 和 PostgreSQL",
+      "entry": "connection.ts",
+      "keyFiles": ["schema.pg.ts", "connection.ts", "index.ts"],
+      "subModules": ["pg", "migrations"],
+      "coverage": {
+        "interfaces": true,
+        "dependencies": true,
+        "tests": false,
+        "dataModels": true
+      },
+      "gaps": ["缺少数据库优化建议", "迁移策略文档待补充"]
+    },
+    {
+      "path": "src/lib/auth",
+      "name": "认证模块",
+      "description": "用户认证和授权系统，基于 Better Auth",
+      "entry": "auth-instance.ts",
+      "keyFiles": ["config.ts", "server.ts", "client.ts", "permissions.ts"],
+      "subModules": [],
+      "coverage": {
+        "interfaces": true,
+        "dependencies": true,
+        "tests": true,
+        "dataModels": true
+      },
+      "gaps": ["安全最佳实践文档待补充", "多租户支持方案待完善"]
+    }
+  ],
+  "unscannedModules": [
+    {
+      "path": "src/components",
+      "name": "组件库模块",
+      "reason": "组件数量庞大，建议按功能分批扫描",
+      "priority": "high"
+    },
+    {
+      "path": "src/app/api",
+      "name": "API 路由模块",
+      "reason": "API 端点较多，需要单独详细扫描",
+      "priority": "high"
+    },
+    {
+      "path": "tests",
+      "name": "测试模块",
+      "reason": "已有基础了解，可稍后补充测试策略文档",
+      "priority": "medium"
+    },
+    {
+      "path": "src/types",
+      "name": "类型定义模块",
+      "reason": "已在其他模块文档中引用",
+      "priority": "low"
+    }
+  ],
+  "statistics": {
+    "languages": {
+      "TypeScript": "85%",
+      "JavaScript": "5%",
+      "SQL": "5%",
+      "CSS": "3%",
+      "Markdown": "2%"
+    },
+    "frameworks": [
+      "Next.js",
+      "React",
+      "Drizzle ORM",
+      "Better Auth",
+      "Vercel AI SDK",
+      "Tailwind CSS"
+    ],
+    "directories": {
+      "src/app": "Next.js App Router",
+      "src/components": "React 组件",
+      "src/lib": "业务逻辑库",
+      "tests": "Playwright 测试",
+      "docs": "项目文档"
+    }
+  },
+  "recommendations": {
+    "nextSteps": [
+      "扫描 src/components 模块，重点了解 UI 组件和聊天组件",
+      "扫描 src/app/api 模块，整理所有 API 端点",
+      "补充部署相关文档（Docker、Vercel）",
+      "完善测试策略文档"
+    ],
+    "improvements": [
+      "考虑添加架构决策记录 (ADR)",
+      "补充性能优化指南",
+      "添加故障排查手册",
+      "创建开发者快速上手指南"
+    ]
+  },
+  "ignorePatterns": [
+    "node_modules/**",
+    ".git/**",
+    ".github/**",
+    ".next/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    "test-results/**",
+    "*.lock",
+    "*.log",
+    "*.bin",
+    ".env*",
+    "memory-bank/**",
+    "local-data/**",
+    ".cursor/**",
+    "certificates/**",
+    "public/uploads/**"
+  ]
+}

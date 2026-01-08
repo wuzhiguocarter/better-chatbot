@@ -17,6 +17,7 @@ import {
   EllipsisIcon,
   FileIcon,
   Download,
+  Share,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "ui/tooltip";
 import { Button } from "ui/button";
@@ -61,10 +62,53 @@ import {
 import { WorkflowInvocation } from "./tool-invocation/workflow-invocation";
 import { TaskMessagePart } from "./task-message/task-message-part";
 import dynamic from "next/dynamic";
+import { ChatExportPopup } from "./export/chat-export-popup";
 import { notify } from "lib/notify";
 import { ModelProviderIcon } from "ui/model-provider-icon";
 import { appStore } from "@/app/store";
 import { BACKGROUND_COLORS, EMOJI_DATA } from "lib/const";
+import { FollowUpQuestionsPart } from "@/components/message-parts/follow-up-questions-part";
+
+/**
+ * 从文本中增量解析后续问题（支持不完整 XML）
+ * 用于前端流式解析，可以处理未闭合的 <fq> 标签
+ */
+function parseFollowUpQuestionsIncremental(
+  text: string,
+  previousQuestions: string[] = [],
+): string[] {
+  const questions = [...previousQuestions];
+
+  const fqStartMatch = text.match(/<fq>/i);
+  if (!fqStartMatch) return questions;
+
+  const afterFqStart = text.substring((fqStartMatch.index ?? 0) + 4);
+  const fqEndMatch = afterFqStart.match(/<\/fq>/i);
+  const contentToParse = fqEndMatch
+    ? afterFqStart.substring(0, fqEndMatch.index ?? 0)
+    : afterFqStart;
+
+  // 匹配完整或部分问题（最少5字符）
+  const qRegex = /<q>(.*?)<\/q>|<q>([^<]{5,})/g;
+  let match;
+  let questionIndex = 0;
+
+  while ((match = qRegex.exec(contentToParse)) !== null) {
+    const questionText = (match[1] || match[2] || "").trim();
+    const isComplete = match[0].includes("</q>");
+
+    if (questionText && questionText.length >= 5) {
+      if (questionIndex < questions.length) {
+        questions[questionIndex] = questionText;
+      } else if (isComplete) {
+        questions.push(questionText);
+      }
+      questionIndex++;
+    }
+  }
+
+  return questions.filter((q) => q.length > 0).slice(0, 5);
+}
 
 type MessagePart = UIMessage["parts"][number];
 type TextMessagePart = Extract<MessagePart, { type: "text" }>;
@@ -91,6 +135,7 @@ interface AssistMessagePartProps {
   threadId?: string;
   setMessages?: UseChatHelpers<UIMessage>["setMessages"];
   sendMessage?: UseChatHelpers<UIMessage>["sendMessage"];
+  setInput?: (value: string) => void;
   isError?: boolean;
   readonly?: boolean;
 }
@@ -296,6 +341,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
   setMessages,
   readonly,
   sendMessage,
+  setInput,
 }: AssistMessagePartProps) {
   const { copied, copy } = useCopy();
   const [isLoading, setIsLoading] = useState(false);
@@ -303,6 +349,45 @@ export const AssistMessagePart = memo(function AssistMessagePart({
   const [isDeleting, setIsDeleting] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const metadata = message.metadata as ChatMetadata | undefined;
+
+  // 本地状态：实时解析的后续问题（用于增量渲染）
+  const [streamFollowUpQuestions, setStreamFollowUpQuestions] = useState<
+    string[]
+  >([]);
+
+  // 跟踪上次解析的文本长度，用于性能优化
+  const lastParsedLengthRef = useRef(0);
+
+  // 当原始文本更新时，实时解析后续问题（增强版：支持不完整 XML）
+  useEffect(() => {
+    if (part.text) {
+      // 性能优化：只有文本增长超过阈值时才重新解析
+      if (part.text.length > lastParsedLengthRef.current + 10) {
+        const questions = parseFollowUpQuestionsIncremental(
+          part.text,
+          streamFollowUpQuestions,
+        );
+
+        // 只在问题列表变化时更新
+        if (
+          JSON.stringify(questions) !== JSON.stringify(streamFollowUpQuestions)
+        ) {
+          setStreamFollowUpQuestions(questions);
+        }
+
+        lastParsedLengthRef.current = part.text.length;
+      }
+    }
+  }, [part.text, streamFollowUpQuestions]);
+
+  // 清理文本中的后续问题 XML 标签
+  const cleanedText = useMemo(() => {
+    return part.text.replace(/<fq>[\s\S]*?<\/fq>/g, "").trim();
+  }, [part.text]);
+
+  // 使用 metadata 中的问题（最终版本）或本地解析的问题（流式版本）
+  const followUpQuestions =
+    metadata?.followUpQuestions || streamFollowUpQuestions;
 
   const agent = useMemo(() => {
     return agentList.find((a) => a.id === metadata?.agentId);
@@ -373,7 +458,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
           "opacity-50 border border-destructive bg-card rounded-lg": isError,
         })}
       >
-        <Markdown>{part.text}</Markdown>
+        <Markdown>{cleanedText}</Markdown>
       </div>
       {showActions && (
         <div className="flex w-full">
@@ -384,13 +469,25 @@ export const AssistMessagePart = memo(function AssistMessagePart({
                 variant="ghost"
                 size="icon"
                 className="size-3! p-4!"
-                onClick={() => copy(part.text)}
+                onClick={() => copy(cleanedText)}
               >
                 {copied ? <Check /> : <Copy />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>Copy</TooltipContent>
           </Tooltip>
+          {threadId && (
+            <ChatExportPopup threadId={threadId}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-3! p-4!"
+                title="Share Link"
+              >
+                <Share />
+              </Button>
+            </ChatExportPopup>
+          )}
           {!readonly && (
             <>
               <Tooltip>
@@ -568,6 +665,12 @@ export const AssistMessagePart = memo(function AssistMessagePart({
             </Tooltip>
           )}
         </div>
+      )}
+      {showActions && followUpQuestions && setInput && (
+        <FollowUpQuestionsPart
+          questions={followUpQuestions}
+          onQuestionClick={setInput}
+        />
       )}
       <div ref={ref} className="min-w-0" />
     </div>

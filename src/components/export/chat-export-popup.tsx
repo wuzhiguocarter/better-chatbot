@@ -1,6 +1,5 @@
 import { exportChatAction } from "@/app/api/chat/actions";
 import { LinkIcon, Loader } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { safe } from "ts-safe";
@@ -24,9 +23,9 @@ type Props = {
 };
 
 export function ChatExportPopup(props: Props) {
-  const router = useRouter();
   const t = useTranslations();
   const [isExporting, setIsExporting] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleExport = useCallback(() => {
     setIsExporting(true);
@@ -40,17 +39,17 @@ export function ChatExportPopup(props: Props) {
         const link = `${window.location.origin}/export/${exportId}`;
         navigator.clipboard.writeText(link).then(() => {
           toast.success(t("Chat.Thread.linkCopied"));
+          setOpen(false);
         });
-        router.push(`/export/${exportId}`);
       })
       .ifFail((error) => {
         toast.error(error.message || "Failed to export chat");
       })
       .unwrap();
-  }, [props.threadId, router]);
+  }, [props.threadId, t]);
 
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent className="flex flex-col gap-4">
         <DialogHeader className="mb-4">
