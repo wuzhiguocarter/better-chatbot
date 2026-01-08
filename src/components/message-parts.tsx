@@ -59,6 +59,7 @@ import {
 } from "lib/keyboard-shortcuts";
 
 import { WorkflowInvocation } from "./tool-invocation/workflow-invocation";
+import { TaskMessagePart } from "./task-message/task-message-part";
 import dynamic from "next/dynamic";
 import { notify } from "lib/notify";
 import { ModelProviderIcon } from "ui/model-provider-icon";
@@ -902,6 +903,10 @@ export const ToolMessagePart = memo(
         );
       }
 
+      if (toolName === "research_agent_task") {
+        return <TaskMessagePart part={part} />;
+      }
+
       if (state === "output-available") {
         switch (toolName) {
           case DefaultToolName.CreatePieChart:
@@ -929,7 +934,17 @@ export const ToolMessagePart = memo(
         }
       }
       return null;
-    }, [toolName, state, onToolCallDirect, result, input]);
+    }, [
+      toolName,
+      state,
+      onToolCallDirect,
+      result,
+      input,
+      isLast,
+      showActions,
+      isError,
+      setMessages,
+    ]);
 
     const { serverName: mcpServerName, toolName: mcpToolName } = useMemo(() => {
       return extractMCPToolId(toolName);
@@ -1136,7 +1151,6 @@ export const ToolMessagePart = memo(
                 )}
               </div>
             </div>
-
             {showActions && (
               <div className="flex flex-row gap-2 items-center">
                 <Tooltip>
