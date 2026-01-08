@@ -102,14 +102,6 @@ const staticUnsupportedModels = new Set([
   staticModels.openRouter["gemini-2.0-flash-exp:free"],
 ]);
 
-const _staticSupportImageInputModels = {
-  ...staticModels.google,
-  ...staticModels.xai,
-  ...staticModels.openai,
-  ...staticModels.anthropic,
-  ...staticModels.zhipu,
-};
-
 const staticFilePartSupportByModel = new Map<
   LanguageModel,
   readonly string[]
