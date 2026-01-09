@@ -4,6 +4,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  isToolUIPart,
   smoothStream,
   stepCountIs,
   streamText,
@@ -94,6 +95,7 @@ import {
   rememberAgentAction,
   rememberMcpServerCustomizationsAction,
 } from "./actions";
+import { VercelAITaskToolStreamingResultTag } from "app-types/task";
 import { getSession } from "auth/server";
 import { colorize } from "consola/utils";
 import { generateUUID } from "lib/utils";
@@ -465,8 +467,38 @@ export async function POST(request: Request) {
           dataStream.merge(
             result.toUIMessageStream({
               messageMetadata: ({ part }) => {
+                if (part.type === "tool-result") {
+                  if (VercelAITaskToolStreamingResultTag.isMaybe(part.output)) {
+                    const tokenUsage = part.output.tokenUsage;
+                    if (tokenUsage) {
+                      metadata.usage = {
+                        inputTokens:
+                          (metadata.usage?.inputTokens ?? 0) +
+                          tokenUsage.input_tokens,
+                        outputTokens:
+                          (metadata.usage?.outputTokens ?? 0) +
+                          tokenUsage.output_tokens,
+                        totalTokens:
+                          (metadata.usage?.totalTokens ?? 0) +
+                          tokenUsage.total_tokens,
+                      };
+                    }
+                  }
+                }
                 if (part.type == "finish") {
-                  metadata.usage = part.totalUsage;
+                  metadata.usage = {
+                    inputTokens:
+                      (metadata.usage?.inputTokens ?? 0) +
+                      (part.totalUsage?.inputTokens ?? 0),
+                    outputTokens:
+                      (metadata.usage?.outputTokens ?? 0) +
+                      (part.totalUsage?.outputTokens ?? 0),
+                    totalTokens:
+                      (metadata.usage?.totalTokens ?? 0) +
+                      (part.totalUsage?.totalTokens ?? 0),
+                  };
+
+                  part.totalUsage = metadata.usage;
 
                   // 解析后续问题（使用累加的文本）
                   const followUpQuestions =
