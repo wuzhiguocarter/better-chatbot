@@ -6,11 +6,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "NODE_OPTIONS='--inspect' next dev --port 2333",
+    "dev": "next dev --port 2345",
     "dev:turbopack": "next dev --turbopack",
     "dev:https": "next dev --experimental-https",
     "build": "next build",
-    "start": "next start --port 2333",
+    "start": "next start --port 2345",
     "build:local": "cross-env NO_HTTPS='1' next build",
     "test": "vitest run",
     "test:watch": "vitest",
