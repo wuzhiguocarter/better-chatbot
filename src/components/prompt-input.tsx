@@ -18,6 +18,7 @@ import { Button } from "ui/button";
 import { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 import { SelectModel } from "./select-model";
 import { appStore, UploadedFile } from "@/app/store";
+import { useThreadFilesContext } from "@/app/store";
 import { useShallow } from "zustand/shallow";
 import { ChatMention, ChatModel } from "app-types/chat";
 import dynamic from "next/dynamic";
@@ -56,6 +57,7 @@ import { FileUIPart, TextUIPart } from "ai";
 import { toast } from "sonner";
 import { isFilePartSupported, isIngestSupported } from "@/lib/ai/file-support";
 import { useChatModels } from "@/hooks/queries/use-chat-models";
+import { processDocument, isRAGFlowSupported } from "@/lib/ragflow-client";
 
 interface PromptInputProps {
   placeholder?: string;
@@ -71,6 +73,11 @@ interface PromptInputProps {
   threadId?: string;
   disabledMention?: boolean;
   onFocus?: () => void;
+}
+
+function isAudioOrFile(file: File) {
+  if (isRAGFlowSupported(file.type)) return true;
+  return false;
 }
 
 const ChatMentionInput = dynamic(() => import("./chat-mention-input"), {
@@ -99,6 +106,8 @@ export default function PromptInput({
   const [isUploadDropdownOpen, setIsUploadDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFiles } = useThreadFileUploader(threadId);
+  const { setThreadFileParseStatus, setThreadFileChunks, threadFilesContext } =
+    useThreadFilesContext(threadId);
   const { data: providers } = useChatModels();
 
   const [
@@ -214,11 +223,59 @@ export default function PromptInput({
       const list = e.target.files;
       if (!list) return;
       await uploadFiles(Array.from(list));
+
+      if (!threadId) {
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        setIsUploadDropdownOpen(false);
+        return;
+      }
+
+      const currentThreadFiles =
+        appStore.getState().threadFiles[threadId] ?? [];
+
+      for (const file of Array.from(list)) {
+        if (!isAudioOrFile(file)) continue;
+
+        const uploadedFile = currentThreadFiles.find(
+          (f) => f.name === file.name,
+        );
+        if (!uploadedFile) {
+          console.error("Uploaded file not found:", file.name);
+          continue;
+        }
+
+        try {
+          setThreadFileParseStatus(threadId, uploadedFile.id, "UPLOADING", {
+            name: file.name,
+          });
+
+          const result = await processDocument(file);
+
+          setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
+            documentId: result.documentId,
+          });
+
+          if (!result.success || !result.chunks.length) {
+            setThreadFileParseStatus(threadId, uploadedFile.id, "ERROR", {
+              name: file.name,
+              documentId: result.documentId,
+              error: "Parse failed",
+            });
+            continue;
+          }
+
+          setThreadFileChunks(threadId, uploadedFile.id, result.chunks);
+        } catch (err) {
+          console.error("RAGFlow error:", err);
+        }
+      }
+
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = "";
       setIsUploadDropdownOpen(false);
     },
-    [uploadFiles],
+    [uploadFiles, threadId],
   );
 
   const handleGenerateImage = useCallback(
@@ -356,6 +413,35 @@ export default function PromptInput({
     if (userMessage.length === 0) return;
 
     setInput("");
+
+    const ragflowChunks = threadFilesContext
+      ? Object.values(threadFilesContext)
+          .filter((f) => f.status === "READY" && f.chunks.length > 0)
+          .flatMap((f) =>
+            f.chunks.map((c) => ({
+              documentId: f.documentId || "",
+              name: f.name,
+              content: c,
+            })),
+          )
+      : [];
+
+    const ragflowContextText = ragflowChunks.length
+      ? ragflowChunks
+          .map((c) => `【文档：${c.name}】\n${c.content}`)
+          .join("\n\n----\n\n")
+      : "";
+
+    const extraContextMessages = ragflowChunks.length
+      ? [
+          {
+            type: "text",
+            text: ragflowContextText,
+            ingestionPreview: true,
+          } as any,
+        ]
+      : [];
+
     const attachmentParts = uploadedFiles.reduce<
       Array<FileUIPart | TextUIPart | any>
     >((acc, file) => {
@@ -401,7 +487,11 @@ export default function PromptInput({
 
     sendMessage({
       role: "user",
-      parts: [...attachmentParts, { type: "text", text: userMessage }],
+      parts: [
+        ...extraContextMessages,
+        ...attachmentParts,
+        { type: "text", text: userMessage },
+      ],
     });
     appStoreMutate((prev) => ({
       threadFiles: {
@@ -819,6 +909,42 @@ export default function PromptInput({
                             <XIcon className="size-3" />
                           </Button>
                         )}
+
+                        {/* RAGFlow Parse Status */}
+                        {(() => {
+                          if (!threadId) return null;
+
+                          const fileStatus = threadFilesContext?.[file.id];
+
+                          if (!fileStatus) return null;
+
+                          return (
+                            <div className="absolute bottom-1 left-1 right-1 flex items-center gap-1 bg-background/90 rounded px-2 py-1">
+                              {fileStatus.status === "PARSING" && (
+                                <>
+                                  <Loader2 className="size-3 animate-spin" />
+                                  <span className="text-[10px]">解析中...</span>
+                                </>
+                              )}
+                              {fileStatus.status === "READY" && (
+                                <>
+                                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                                  <span className="text-[10px] text-green-600">
+                                    已解析
+                                  </span>
+                                </>
+                              )}
+                              {fileStatus.status === "ERROR" && (
+                                <>
+                                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                                  <span className="text-[10px] text-red-600">
+                                    {fileStatus.error || "解析失败"}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}

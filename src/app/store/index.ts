@@ -21,6 +21,16 @@ export interface UploadedFile {
   dataUrl?: string; // Full data URL format: "data:image/png;base64,..."
 }
 
+export type ThreadFileParseStatus = "UPLOADING" | "PARSING" | "READY" | "ERROR";
+
+export interface ThreadFileChunks {
+  documentId?: string;
+  name: string;
+  status: ThreadFileParseStatus;
+  chunks: string[];
+  error?: string;
+}
+
 export interface AppState {
   threadList: ChatThread[];
   mcpList: (MCPServerInfo & { id: string })[];
@@ -39,6 +49,9 @@ export interface AppState {
   threadEvalTaskMentions: Record<string, ChatMention[] | undefined>;
   threadFiles: {
     [threadId: string]: UploadedFile[];
+  };
+  threadFilesContext: {
+    [threadId: string]: Record<string, ThreadFileChunks>;
   };
   threadImageToolModel: {
     [threadId: string]: string | undefined;
@@ -72,6 +85,18 @@ export interface AppState {
     mentions: ChatMention[],
   ) => void;
   clearThreadEvalTaskMentions: (threadId?: string) => void;
+  setThreadFileParseStatus: (
+    threadId: string,
+    documentId: string,
+    status: ThreadFileParseStatus,
+    extra?: Partial<ThreadFileChunks>,
+  ) => void;
+  setThreadFileChunks: (
+    threadId: string,
+    documentId: string,
+    chunks: string[],
+  ) => void;
+  clearThreadFilesContext: (threadId: string) => void;
 }
 
 export interface AppDispatch {
@@ -86,6 +111,7 @@ const initialState: AppState = {
   threadMentions: {},
   threadEvalTaskMentions: {},
   threadFiles: {},
+  threadFilesContext: {},
   threadImageToolModel: {},
   mcpList: [],
   agentList: [],
@@ -119,6 +145,9 @@ const initialState: AppState = {
   pendingThreadMention: undefined,
   setThreadEvalTaskMentions: () => {},
   clearThreadEvalTaskMentions: () => {},
+  setThreadFileParseStatus: () => {},
+  setThreadFileChunks: () => {},
+  clearThreadFilesContext: () => {},
 };
 
 export const appStore = create<AppState & AppDispatch>()(
@@ -141,6 +170,64 @@ export const appStore = create<AppState & AppDispatch>()(
           const nextMentions = { ...state.threadEvalTaskMentions };
           delete nextMentions[threadId];
           return { threadEvalTaskMentions: nextMentions };
+        }),
+      setThreadFileParseStatus: (
+        threadId: string,
+        documentId: string,
+        status: ThreadFileParseStatus,
+        extra?: Partial<ThreadFileChunks>,
+      ) =>
+        set((state) => {
+          const threadMap = state.threadFilesContext[threadId] || {};
+          const existing = threadMap[documentId] || {
+            documentId,
+            name: extra?.name || "",
+            status,
+            chunks: [],
+          };
+          return {
+            threadFilesContext: {
+              ...state.threadFilesContext,
+              [threadId]: {
+                ...threadMap,
+                [documentId]: {
+                  ...existing,
+                  ...extra,
+                  status,
+                },
+              },
+            },
+          };
+        }),
+      setThreadFileChunks: (
+        threadId: string,
+        documentId: string,
+        chunks: string[],
+      ) =>
+        set((state) => {
+          const threadMap = state.threadFilesContext[threadId] || {};
+          const existing = threadMap[documentId];
+          if (!existing) return state;
+
+          return {
+            threadFilesContext: {
+              ...state.threadFilesContext,
+              [threadId]: {
+                ...threadMap,
+                [documentId]: {
+                  ...existing,
+                  chunks,
+                  status: "READY",
+                },
+              },
+            },
+          };
+        }),
+      clearThreadFilesContext: (threadId: string) =>
+        set((state) => {
+          const next = { ...state.threadFilesContext };
+          delete next[threadId];
+          return { threadFilesContext: next };
         }),
     }),
     {
@@ -188,3 +275,20 @@ export const useSetThreadEvalTaskMentions = () =>
 
 export const useClearThreadEvalTaskMentions = () =>
   appStore((s) => s.clearThreadEvalTaskMentions);
+
+// Thread files context hooks
+export const useThreadFilesContext = (threadId?: string) => {
+  const setThreadFileParseStatus = appStore((s) => s.setThreadFileParseStatus);
+  const setThreadFileChunks = appStore((s) => s.setThreadFileChunks);
+  const clearThreadFilesContext = appStore((s) => s.clearThreadFilesContext);
+  const threadFilesContext = appStore((s) =>
+    threadId ? s.threadFilesContext[threadId] : {},
+  );
+
+  return {
+    setThreadFileParseStatus,
+    setThreadFileChunks,
+    clearThreadFilesContext,
+    threadFilesContext,
+  };
+};

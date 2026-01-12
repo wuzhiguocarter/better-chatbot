@@ -182,6 +182,9 @@ importers:
       hast-util-to-jsx-runtime:
         specifier: ^2.3.6
         version: 2.3.6
+      import-in-the-middle:
+        specifier: ^2.0.1
+        version: 2.0.1
       ioredis:
         specifier: ^5.8.2
         version: 5.8.2

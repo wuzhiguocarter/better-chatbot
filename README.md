@@ -329,6 +329,21 @@ BLOB_READ_WRITE_TOKEN=
 # FILE_STORAGE_S3_REGION=
 
 # (Optional)
+# === RAGFlow Document Parsing ===
+# RAGFlow for document parsing and chunk extraction
+# Get API key: http://localhost:9621/settings (after starting RAGFlow)
+RAGFLOW_API_BASE=http://localhost:9621
+RAGFLOW_API_KEY=your_ragflow_api_key_here
+RAGFLOW_DATASET_ID=your_dataset_id_here
+
+# RAGFlow supported MIME types (comma-separated)
+# Audio: mp3, wav, m4a, ogg
+# Documents: pdf, txt, md, doc, docx, xls, xlsx, ppt, pptx
+# Data: csv, json
+RAGFLOW_SUPPORTED_MIME_TYPES=audio/mpeg,audio/wav,audio/mp4,audio/ogg,application/pdf,text/plain,text/markdown,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,application/csv,application/json
+
+
+# (Optional)
 # === OAuth Settings ===
 # Fill in these values only if you want to enable Google/GitHub/Microsoft login
 
