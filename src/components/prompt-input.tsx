@@ -221,16 +221,7 @@ export default function PromptInput({
       const list = e.target.files;
       if (!list) return;
 
-      const provider = providers?.find(
-        (provider) => provider.provider === globalModel?.provider,
-      );
-      const currentModelInfo = provider?.models.find(
-        (model) => model.name === globalModel?.model,
-      );
-      const currentSupportedFileMimeTypes =
-        currentModelInfo?.supportedFileMimeTypes ?? [];
-
-      await uploadFiles(Array.from(list), currentSupportedFileMimeTypes);
+      await uploadFiles(Array.from(list));
 
       if (!threadId) {
         // Reset input

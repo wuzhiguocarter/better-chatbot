@@ -11,7 +11,7 @@ export function useThreadFileUploader(threadId?: string) {
   const { upload } = useFileUpload();
 
   const uploadFiles = useCallback(
-    async (files: File[], supportedFileMimeTypes: string[] = []) => {
+    async (files: File[]) => {
       if (!threadId || files.length === 0) return;
       const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50MB per file
 
@@ -20,14 +20,6 @@ export function useThreadFileUploader(threadId?: string) {
           toast.error(`${file.name}: file too large (>50MB)`);
           continue;
         }
-
-        if (supportedFileMimeTypes && supportedFileMimeTypes.length > 0) {
-          if (!supportedFileMimeTypes.includes(file.type)) {
-            toast.error(`${file.name}: unsupported file type`);
-            continue;
-          }
-        }
-
         const previewUrl = file.type?.startsWith("image/")
           ? URL.createObjectURL(file)
           : undefined;

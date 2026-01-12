@@ -1,5 +1,5 @@
 const DEFAULT_RAGFLOW_SUPPORTED_MIME_TYPES =
-  "audio/mpeg,audio/wav,audio/mp4,audio/ogg,application/pdf,text/plain,text/markdown,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,application/csv,application/json";
+  "image/jpeg,image/png,image/webp,audio/mpeg,audio/wav,audio/mp4,audio/ogg,application/pdf,text/plain,text/markdown,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,application/csv,application/json";
 
 export function getRAGFlowSupportedMimeTypes(): Set<string> {
   const value = DEFAULT_RAGFLOW_SUPPORTED_MIME_TYPES;

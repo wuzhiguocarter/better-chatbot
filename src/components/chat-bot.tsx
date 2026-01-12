@@ -45,6 +45,7 @@ import { getStorageManager } from "lib/browser-stroage";
 import { AnimatePresence, motion } from "framer-motion";
 import { useThreadFileUploader } from "@/hooks/use-thread-file-uploader";
 import { useFileDragOverlay } from "@/hooks/use-file-drag-overlay";
+import { useChatModels } from "@/hooks/queries/use-chat-models";
 
 type Props = {
   threadId: string;
@@ -69,6 +70,7 @@ firstTimeStorage.set(false);
 export default function ChatBot({ threadId, initialMessages }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const { data: providers } = useChatModels();
 
   const { uploadFiles } = useThreadFileUploader(threadId);
   const handleFileDrop = useCallback(
@@ -160,33 +162,39 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
           window.history.replaceState({}, "", `/chat/${threadId}`);
         }
         const lastMessage = messages.at(-1)!;
-        // Filter out UI-only parts (e.g., source-url) so the model doesn't receive unknown parts
-        // const attachments: ChatAttachment[] = lastMessage.parts.reduce(
-        //   (acc: ChatAttachment[], part: any) => {
-        //     if (part?.type === "file") {
-        //       acc.push({
-        //         type: "file",
-        //         url: part.url,
-        //         mediaType: part.mediaType,
-        //         filename: part.filename,
-        //       });
-        //     } else if (part?.type === "source-url") {
-        //       acc.push({
-        //         type: "source-url",
-        //         url: part.url,
-        //         mediaType: part.mediaType,
-        //         filename: part.title,
-        //       });
-        //     }
-        //     return acc;
-        //   },
-        //   [],
-        // );
 
-        const sanitizedLastMessage = {
+        // Check for unsupported media files and remove them from the message
+        const globalModel = latestRef.current.model;
+        const providersList = latestRef.current.providers;
+        const provider = providersList?.find(
+          (provider) => provider.provider === globalModel?.provider,
+        );
+        const currentModelInfo = provider?.models.find(
+          (model) => model.name === globalModel?.model,
+        );
+
+        // Filter out unsupported file parts and UI-only parts (e.g., source-url)
+        const supportedMimeTypes = new Set(
+          currentModelInfo?.supportedFileMimeTypes ?? [],
+        );
+
+        // Deep clone the message and filter out unsupported parts
+        const sanitizedLastMessage: typeof lastMessage = {
           ...lastMessage,
-          parts: lastMessage.parts.filter((p: any) => p?.type !== "source-url"),
-        } as typeof lastMessage;
+          parts: lastMessage.parts
+            .filter((p: any) => {
+              // Filter out UI-only source-url parts
+              if (p?.type === "source-url") return false;
+
+              // Filter out unsupported file parts
+              if (p?.type === "file" && p?.mediaType) {
+                return supportedMimeTypes.has(p.mediaType);
+              }
+
+              return true;
+            })
+            .map((p) => structuredClone(p)),
+        };
         const hasFilePart = lastMessage.parts?.some(
           (p) => (p as any)?.type === "file",
         );
@@ -272,6 +280,7 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
     threadId,
     mentions: threadMentions[threadId],
     threadImageToolModel,
+    providers,
   });
 
   const isLoading = useMemo(

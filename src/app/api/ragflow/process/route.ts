@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          chunk_method: "naive",
+          // chunk_method: "naive",
           parser_config: {
             chunk_token_num: 256,
             layout_recognize: true,
