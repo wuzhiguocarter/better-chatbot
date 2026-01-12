@@ -21,11 +21,7 @@ import {
 
 import { safe } from "ts-safe";
 import { mutate } from "swr";
-import {
-  ChatApiSchemaRequestBody,
-  ChatAttachment,
-  ChatModel,
-} from "app-types/chat";
+import { ChatApiSchemaRequestBody, ChatModel } from "app-types/chat";
 import { useToRef } from "@/hooks/use-latest";
 import { isShortcutEvent, Shortcuts } from "lib/keyboard-shortcuts";
 import { Button } from "ui/button";
@@ -73,6 +69,7 @@ firstTimeStorage.set(false);
 export default function ChatBot({ threadId, initialMessages }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
   const { uploadFiles } = useThreadFileUploader(threadId);
   const handleFileDrop = useCallback(
     async (files: File[]) => {
@@ -164,27 +161,27 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
         }
         const lastMessage = messages.at(-1)!;
         // Filter out UI-only parts (e.g., source-url) so the model doesn't receive unknown parts
-        const attachments: ChatAttachment[] = lastMessage.parts.reduce(
-          (acc: ChatAttachment[], part: any) => {
-            if (part?.type === "file") {
-              acc.push({
-                type: "file",
-                url: part.url,
-                mediaType: part.mediaType,
-                filename: part.filename,
-              });
-            } else if (part?.type === "source-url") {
-              acc.push({
-                type: "source-url",
-                url: part.url,
-                mediaType: part.mediaType,
-                filename: part.title,
-              });
-            }
-            return acc;
-          },
-          [],
-        );
+        // const attachments: ChatAttachment[] = lastMessage.parts.reduce(
+        //   (acc: ChatAttachment[], part: any) => {
+        //     if (part?.type === "file") {
+        //       acc.push({
+        //         type: "file",
+        //         url: part.url,
+        //         mediaType: part.mediaType,
+        //         filename: part.filename,
+        //       });
+        //     } else if (part?.type === "source-url") {
+        //       acc.push({
+        //         type: "source-url",
+        //         url: part.url,
+        //         mediaType: part.mediaType,
+        //         filename: part.title,
+        //       });
+        //     }
+        //     return acc;
+        //   },
+        //   [],
+        // );
 
         const sanitizedLastMessage = {
           ...lastMessage,
@@ -243,7 +240,7 @@ export default function ChatBot({ threadId, initialMessages }: Props) {
           imageTool: {
             model: latestRef.current.threadImageToolModel[threadId],
           },
-          attachments,
+          // attachments,
         };
         return { body: requestBody };
       },

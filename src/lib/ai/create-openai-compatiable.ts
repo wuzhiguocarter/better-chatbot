@@ -16,14 +16,12 @@ export function createOpenAICompatibleModels(
   const providers: Record<string, Record<string, LanguageModel>> = {};
   const unsupportedModels = new Set<LanguageModel>();
   const fileSupportedModels = new Map<LanguageModel, readonly string[]>();
-  const imageInputUnsupportedModels = new Set<LanguageModel>();
 
   if (!config?.length) {
     return {
       providers,
       unsupportedModels,
       fileSupportedModels,
-      imageInputUnsupportedModels,
     };
   }
   try {
@@ -51,7 +49,6 @@ export function createOpenAICompatibleModels(
             uiName,
             supportsTools,
             apiVersion: modelApiVersion,
-            isImageInputUnsupported,
             supportedFileMimeTypes,
           }) => {
             if (!modelApiVersion) {
@@ -66,10 +63,6 @@ export function createOpenAICompatibleModels(
               unsupportedModels.add(model);
             }
 
-            if (isImageInputUnsupported) {
-              imageInputUnsupportedModels.add(model);
-            }
-
             // Register file support if specified
             if (supportedFileMimeTypes && supportedFileMimeTypes.length > 0) {
               fileSupportedModels.set(model, supportedFileMimeTypes);
@@ -79,22 +72,12 @@ export function createOpenAICompatibleModels(
       } else {
         // Standard OpenAI-compatible providers (original implementation)
         models.forEach(
-          ({
-            apiName,
-            uiName,
-            supportsTools,
-            isImageInputUnsupported,
-            supportedFileMimeTypes,
-          }) => {
+          ({ apiName, uiName, supportsTools, supportedFileMimeTypes }) => {
             const model = customProvider(apiName);
             providers[providerKey][uiName] = model;
 
             if (!supportsTools) {
               unsupportedModels.add(model);
-            }
-
-            if (isImageInputUnsupported) {
-              imageInputUnsupportedModels.add(model);
             }
 
             // Register file support if specified
@@ -113,7 +96,6 @@ export function createOpenAICompatibleModels(
     providers,
     unsupportedModels,
     fileSupportedModels,
-    imageInputUnsupportedModels,
   };
 }
 
@@ -132,14 +114,6 @@ const OpenAICompatibleModelSchema = z.object({
     .optional()
     .describe(
       "For Azure OpenAI, the API version for this specific model. Required for Azure OpenAI models.",
-    ),
-  // File upload support configuration
-  isImageInputUnsupported: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe(
-      "Whether the model does not support image input. Set to true to disable image uploads.",
     ),
   supportedFileMimeTypes: z
     .array(z.string())

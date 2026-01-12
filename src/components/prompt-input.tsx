@@ -137,8 +137,6 @@ export default function PromptInput({
   }, [providers, globalModel]);
 
   const supportedFileMimeTypes = modelInfo?.supportedFileMimeTypes;
-  const canUploadImages =
-    supportedFileMimeTypes?.some((mime) => mime.startsWith("image/")) ?? true;
 
   const mentions = useMemo<ChatMention[]>(() => {
     if (!threadId) return [];
@@ -222,7 +220,17 @@ export default function PromptInput({
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const list = e.target.files;
       if (!list) return;
-      await uploadFiles(Array.from(list));
+
+      const provider = providers?.find(
+        (provider) => provider.provider === globalModel?.provider,
+      );
+      const currentModelInfo = provider?.models.find(
+        (model) => model.name === globalModel?.model,
+      );
+      const currentSupportedFileMimeTypes =
+        currentModelInfo?.supportedFileMimeTypes ?? [];
+
+      await uploadFiles(Array.from(list), currentSupportedFileMimeTypes);
 
       if (!threadId) {
         // Reset input
@@ -275,7 +283,7 @@ export default function PromptInput({
       if (fileInputRef.current) fileInputRef.current.value = "";
       setIsUploadDropdownOpen(false);
     },
-    [uploadFiles, threadId],
+    [uploadFiles, threadId, providers, globalModel],
   );
 
   const handleGenerateImage = useCallback(
@@ -630,9 +638,6 @@ export default function PromptInput({
                   <DropdownMenuContent align="start" side="top">
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      disabled={
-                        modelInfo?.isImageInputUnsupported || !canUploadImages
-                      }
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <PaperclipIcon className="mr-2 size-4" />

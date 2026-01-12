@@ -5,7 +5,7 @@ import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { anthropic } from "@ai-sdk/anthropic";
 import { xai } from "@ai-sdk/xai";
-import { LanguageModelV2, openrouter } from "@openrouter/ai-sdk-provider";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import { createGroq } from "@ai-sdk/groq";
 import { createZhipu } from "@wuzhiguocarter/zhipu-ai-provider";
 import { LanguageModel } from "ai";
@@ -165,7 +165,6 @@ const {
   providers: openaiCompatibleModels,
   unsupportedModels: openaiCompatibleUnsupportedModels,
   fileSupportedModels: openaiCompatibleFileSupportedModels,
-  imageInputUnsupportedModels: openaiCompatibleImageInputUnsupportedModels,
 } = createOpenAICompatibleModels(openaiCompatibleProviders);
 
 const allModels = { ...openaiCompatibleModels, ...staticModels };
@@ -177,18 +176,6 @@ const allUnsupportedModels = new Set([
 
 export const isToolCallUnsupportedModel = (model: LanguageModel) => {
   return allUnsupportedModels.has(model);
-};
-
-const isImageInputUnsupportedModel = (model: LanguageModelV2) => {
-  // First check if the model is explicitly configured to not support image input
-  if (openaiCompatibleImageInputUnsupportedModels.has(model)) {
-    return true;
-  }
-
-  // Then check file MIME types for image support
-  const mimeTypes = getFilePartSupportedMimeTypes(model);
-  const hasImageSupport = mimeTypes.some((mime) => mime.startsWith("image/"));
-  return !hasImageSupport;
 };
 
 export const getFilePartSupportedMimeTypes = (model: LanguageModel) => {
@@ -207,7 +194,6 @@ export const customModelProvider = {
     models: Object.entries(models).map(([name, model]) => ({
       name,
       isToolCallUnsupported: isToolCallUnsupportedModel(model),
-      isImageInputUnsupported: isImageInputUnsupportedModel(model),
       supportedFileMimeTypes: [...getFilePartSupportedMimeTypes(model)],
     })),
     hasAPIKey: checkProviderAPIKey(provider as keyof typeof staticModels),

@@ -24,9 +24,8 @@
 
 ## 概述
 
-better-chatbot 支持为不同模型配置文件上传功能，包括图片、PDF等文件类型。文件上传支持通过以下两个核心参数控制：
+better-chatbot 支持为不同模型配置文件上传功能，包括图片、PDF等文件类型。文件上传支持通过以下核心参数控制：
 
-- `isImageInputUnsupported`: 布尔值，控制模型是否支持图片输入
 - `supportedFileMimeTypes`: 字符串数组，定义模型支持的文件MIME类型
 
 ## 系统架构
@@ -66,8 +65,7 @@ interface OpenAICompatibleModel {
   name: string;
   provider: string;
   maxTokens: number;
-  // 新增文件支持字段
-  isImageInputUnsupported?: boolean;
+  // 文件支持字段
   supportedFileMimeTypes?: readonly string[];
 }
 ```
@@ -106,7 +104,6 @@ export const OPENAI_COMPATIBLE_DATA = {
       id: "custom-gpt-4-vision",
       name: "Custom GPT-4 Vision",
       maxTokens: 128000,
-      isImageInputUnsupported: false, // 启用图片输入
       supportedFileMimeTypes: [
         "image/jpeg",
         "image/png",
@@ -119,14 +116,12 @@ export const OPENAI_COMPATIBLE_DATA = {
       id: "custom-gpt-3.5-turbo",
       name: "Custom GPT-3.5 Turbo",
       maxTokens: 16384,
-      isImageInputUnsupported: true, // 禁用图片输入
       supportedFileMimeTypes: [] // 无文件支持
     },
     {
       id: "custom-doc-analyzer",
       name: "Custom Document Analyzer",
       maxTokens: 32000,
-      isImageInputUnsupported: false,
       supportedFileMimeTypes: [
         "application/pdf",
         "text/plain",
