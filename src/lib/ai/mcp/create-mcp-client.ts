@@ -238,6 +238,7 @@ export class MCPClient {
 
         await withTimeout(
           client.connect(this.transport, {
+            timeout: MCP_MAX_TOTAL_TIMEOUT,
             maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
           }),
           CONNET_TIMEOUT,
@@ -256,6 +257,7 @@ export class MCPClient {
           });
           await withTimeout(
             client.connect(this.transport, {
+              timeout: MCP_MAX_TOTAL_TIMEOUT,
               maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
             }),
             CONNET_TIMEOUT,
@@ -288,6 +290,7 @@ export class MCPClient {
             try {
               await withTimeout(
                 client.connect(this.transport, {
+                  timeout: MCP_MAX_TOTAL_TIMEOUT,
                   maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
                 }),
                 CONNET_TIMEOUT,
@@ -378,6 +381,15 @@ export class MCPClient {
       const requestOptions = buildRequestOptions(MCP_MAX_TOTAL_TIMEOUT, {
         timeout: MCP_MAX_TOTAL_TIMEOUT,
       });
+
+      // // Handle logging notifications
+      // client.setNotificationHandler(LoggingMessageNotificationSchema, ({ params }) => {
+      //   this.loggingCallback?.({
+      //     level: params.level,
+      //     data: typeof params.data === "string" ? params.data : JSON.stringify(params.data),
+      //   });
+      // });
+
       return client?.callTool(
         {
           name: toolName,
