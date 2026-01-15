@@ -18,6 +18,7 @@ import { McpServerTable } from "lib/db/pg/schema.pg";
 import { createMCPToolId } from "./mcp-tool-id";
 import globalLogger from "logger";
 import { jsonSchema, ToolCallOptions } from "ai";
+import type { UIMessageStreamWriter } from "ai";
 import { createMemoryMCPConfigStorage } from "./memory-mcp-config-storage";
 import { colorize } from "consola/utils";
 
@@ -109,7 +110,9 @@ export class MCPClientsManager {
   /**
    * Returns all tools from all clients as a flat object
    */
-  async tools(): Promise<Record<string, VercelAIMcpTool>> {
+  async tools(
+    dataStream?: UIMessageStreamWriter,
+  ): Promise<Record<string, VercelAIMcpTool>> {
     await this.waitInitialized();
     return Array.from(this.clients.entries()).reduce(
       (acc, [id, client]) => {
@@ -136,7 +139,11 @@ export class MCPClientsManager {
                     _mcpServerId: id,
                     execute: (params, options: ToolCallOptions) => {
                       options?.abortSignal?.throwIfAborted();
-                      return this.toolCall(id, tool.name, params);
+                      return this.toolCall(id, tool.name, params, {
+                        abortSignal: options?.abortSignal,
+                        dataStream,
+                        toolCallId: options?.toolCallId,
+                      });
                     },
                   }),
               };
@@ -257,10 +264,26 @@ export class MCPClientsManager {
     }
     return this.toolCall(client.id, toolName, input);
   }
-  async toolCall(id: string, toolName: string, input: unknown) {
+  async toolCall(
+    id: string,
+    toolName: string,
+    input: unknown,
+    context?: {
+      abortSignal?: AbortSignal;
+      dataStream?: UIMessageStreamWriter;
+      toolCallId?: string;
+    },
+  ) {
     return safe(() => this.getClient(id))
       .map((client) => {
         if (!client) throw new Error(`Client ${id} not found`);
+        if (context) {
+          client.client.setCallContext({
+            abortSignal: context.abortSignal,
+            dataStream: context.dataStream,
+            toolCallId: context.toolCallId,
+          });
+        }
         return client.client;
       })
       .map((client) => client.callTool(toolName, input))

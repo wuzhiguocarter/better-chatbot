@@ -272,6 +272,7 @@ export async function POST(request: Request) {
             loadMcpTools({
               mentions: enabledMentions,
               allowedMcpServers,
+              dataStream,
             }),
           )
           .orElse({});
@@ -319,6 +320,7 @@ export async function POST(request: Request) {
                   ...APP_DEFAULT_TOOLS,
                 },
                 request.signal,
+                dataStream,
               );
               part.output = output;
 
