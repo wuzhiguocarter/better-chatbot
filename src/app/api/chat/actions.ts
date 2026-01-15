@@ -21,6 +21,7 @@ import {
   chatRepository,
   mcpMcpToolCustomizationRepository,
   mcpServerCustomizationRepository,
+  messageFeedbackRepository,
 } from "lib/db/repository";
 import { customModelProvider } from "lib/ai/models";
 import { toAny } from "lib/utils";
@@ -245,4 +246,37 @@ export async function exportChatAction({
     exporterId: userId,
     expiresAt: expiresAt ?? undefined,
   });
+}
+
+export async function toggleMessageFeedbackAction({
+  messageId,
+  feedbackType,
+}: {
+  messageId: string;
+  feedbackType: "upvote" | "downvote";
+}) {
+  const userId = await getUserId();
+
+  const result = await messageFeedbackRepository.toggleFeedback(
+    userId,
+    messageId,
+    feedbackType,
+  );
+
+  return result;
+}
+
+export async function getMessageFeedbackAction({
+  messageId,
+}: {
+  messageId: string;
+}) {
+  const userId = await getUserId();
+
+  const feedbackType = await messageFeedbackRepository.getFeedback(
+    userId,
+    messageId,
+  );
+
+  return feedbackType;
 }

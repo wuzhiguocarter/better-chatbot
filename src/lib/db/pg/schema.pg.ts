@@ -466,9 +466,34 @@ export const ChatExportCommentTable = pgTable("chat_export_comment", {
   updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const MessageFeedbackTable = pgTable(
+  "message_feedback",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    messageId: text("message_id")
+      .notNull()
+      .references(() => ChatMessageTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    feedbackType: varchar("feedback_type", {
+      enum: ["upvote", "downvote"],
+    }).notNull(),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    unique().on(table.userId, table.messageId),
+    index("message_feedback_message_id_idx").on(table.messageId),
+    index("message_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
 export type ArchiveEntity = typeof ArchiveTable.$inferSelect;
 export type ArchiveItemEntity = typeof ArchiveItemTable.$inferSelect;
 export type BookmarkEntity = typeof BookmarkTable.$inferSelect;
 export type EvalConfigurationEntity =
   typeof EvalConfigurationTable.$inferSelect;
 export type EvalResultItemEntity = typeof EvalResultItemTable.$inferSelect;
+export type MessageFeedbackEntity = typeof MessageFeedbackTable.$inferSelect;

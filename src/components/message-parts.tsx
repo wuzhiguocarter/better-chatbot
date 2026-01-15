@@ -68,6 +68,7 @@ import { ModelProviderIcon } from "ui/model-provider-icon";
 import { appStore } from "@/app/store";
 import { BACKGROUND_COLORS, EMOJI_DATA } from "lib/const";
 import { FollowUpQuestionsPart } from "@/components/message-parts/follow-up-questions-part";
+import { MessageFeedbackButtons } from "./message-feedback-buttons";
 
 /**
  * 从文本中增量解析后续问题（支持不完整 XML）
@@ -488,6 +489,7 @@ export const AssistMessagePart = memo(function AssistMessagePart({
               </Button>
             </ChatExportPopup>
           )}
+          <MessageFeedbackButtons messageId={message.id} readonly={readonly} />
           {!readonly && (
             <>
               <Tooltip>
