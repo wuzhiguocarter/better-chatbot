@@ -288,7 +288,13 @@
       "sharePublicLinkDescription": "All messages added after sharing will remain private.",
       "creatingLink": "Creating link...",
       "createLink": "Create Link",
-      "linkCopied": "Link copied"
+      "linkCopied": "Link copied",
+      "MessageFeedback": {
+        "like": "Like",
+        "dislike": "Dislike",
+        "liked": "Liked",
+        "disliked": "Disliked"
+      }
     },
     "ChatPreferences": {
       "title": "Chat Preferences",
