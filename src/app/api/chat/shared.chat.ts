@@ -118,6 +118,7 @@ export function manualToolExecuteByLastMessage(
   part: ToolUIPart,
   tools: Record<string, VercelAIMcpTool | VercelAIWorkflowTool | Tool>,
   abortSignal?: AbortSignal,
+  dataStream?: UIMessageStreamWriter,
 ) {
   const { input } = part;
 
@@ -143,6 +144,11 @@ export function manualToolExecuteByLastMessage(
           tool._mcpServerId,
           tool._originToolName,
           input,
+          {
+            toolCallId: part.toolCallId,
+            abortSignal: abortSignal ?? new AbortController().signal,
+            dataStream,
+          },
         );
       }
       return tool.execute!(input, {
@@ -398,8 +404,9 @@ export const workflowToVercelAITools = (
 export const loadMcpTools = (opt?: {
   mentions?: ChatMention[];
   allowedMcpServers?: Record<string, AllowedMCPServer>;
+  dataStream?: UIMessageStreamWriter;
 }) =>
-  safe(() => mcpClientsManager.tools())
+  safe(() => mcpClientsManager.tools(opt?.dataStream))
     .map((tools) => {
       if (opt?.mentions?.length) {
         return filterMCPToolsByMentions(tools, opt.mentions);

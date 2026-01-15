@@ -30,9 +30,12 @@ import { BASE_URL, IS_MCP_SERVER_REMOTE_ONLY, IS_VERCEL_ENV } from "lib/const";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 import { PgOAuthClientProvider } from "./pg-oauth-provider";
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { UIMessageStreamWriter } from "ai";
 
 type ClientOptions = {
   autoDisconnectSeconds?: number;
+  dataStream?: UIMessageStreamWriter;
+  abortSignal?: AbortSignal;
 };
 
 const CONNET_TIMEOUT = IS_VERCEL_ENV ? 30000 : 120000;
@@ -69,6 +72,9 @@ export class MCPClient {
   private disconnectDebounce = createDebounce();
   private needOauthProvider = false;
   private inProgressToolCallIds: string[] = [];
+  private dataStream?: UIMessageStreamWriter;
+  private abortSignal?: AbortSignal;
+  private currentToolCallId?: string;
   constructor(
     private id: string,
     private name: string,
@@ -82,6 +88,8 @@ export class MCPClient {
         `[${this.id.slice(0, 4)}] MCP Client ${this.name}: `,
       ),
     });
+    this.dataStream = options.dataStream;
+    this.abortSignal = options.abortSignal;
   }
 
   get status() {
@@ -354,6 +362,23 @@ export class MCPClient {
     this.transport = undefined;
     void client?.close?.().catch((e) => this.logger.error(e));
   }
+
+  setCallContext(ctx: {
+    dataStream?: UIMessageStreamWriter;
+    abortSignal?: AbortSignal;
+    toolCallId?: string;
+  }) {
+    this.dataStream = ctx.dataStream;
+    this.abortSignal = ctx.abortSignal;
+    this.currentToolCallId = ctx.toolCallId;
+  }
+
+  clearCallContext() {
+    this.dataStream = this.options.dataStream;
+    this.abortSignal = this.options.abortSignal;
+    this.currentToolCallId = undefined;
+  }
+
   async updateToolInfo() {
     if (this.status === "connected" && this.client) {
       this.logger.info("Updating tool info");
@@ -373,31 +398,79 @@ export class MCPClient {
     const id = generateUUID();
     this.inProgressToolCallIds.push(id);
     const execute = async () => {
-      const client = await this.connect();
-      if (this.status === "authorizing") {
-        throw new Error("OAuth authorization required. Try Refresh MCP Client");
+      let interval: NodeJS.Timeout | undefined;
+      let latestResult: unknown;
+      const abortHandler = () => {
+        this.logger.info(
+          `Tool call ${toolName} aborted, disconnecting MCP client`,
+        );
+        void this.disconnect();
+      };
+
+      if (this.abortSignal) {
+        this.abortSignal.addEventListener("abort", abortHandler);
       }
 
-      const requestOptions = buildRequestOptions(MCP_MAX_TOTAL_TIMEOUT, {
-        timeout: MCP_MAX_TOTAL_TIMEOUT,
-      });
+      try {
+        const client = await this.connect();
+        if (this.status === "authorizing") {
+          throw new Error(
+            "OAuth authorization required. Try Refresh MCP Client",
+          );
+        }
 
-      // // Handle logging notifications
-      // client.setNotificationHandler(LoggingMessageNotificationSchema, ({ params }) => {
-      //   this.loggingCallback?.({
-      //     level: params.level,
-      //     data: typeof params.data === "string" ? params.data : JSON.stringify(params.data),
-      //   });
-      // });
+        const requestOptions = buildRequestOptions(MCP_MAX_TOTAL_TIMEOUT, {
+          timeout: MCP_MAX_TOTAL_TIMEOUT,
+          signal: this.abortSignal,
+        });
 
-      return client?.callTool(
-        {
-          name: toolName,
-          arguments: input as Record<string, unknown>,
-        },
-        undefined,
-        requestOptions,
-      );
+        if (this.dataStream && this.currentToolCallId) {
+          interval = setInterval(() => {
+            if (latestResult === undefined) return;
+            this.dataStream?.write({
+              type: "tool-output-available",
+              toolCallId: this.currentToolCallId!,
+              output: latestResult,
+            });
+          }, 1000);
+        }
+
+        // // Handle logging notifications
+        // client.setNotificationHandler(LoggingMessageNotificationSchema, ({ params }) => {
+        //   this.loggingCallback?.({
+        //     level: params.level,
+        //     data: typeof params.data === "string" ? params.data : JSON.stringify(params.data),
+        //   });
+        // });
+
+        const toolResult = await client?.callTool(
+          {
+            name: toolName,
+            arguments: input as Record<string, unknown>,
+          },
+          undefined,
+          requestOptions,
+        );
+        latestResult = toolResult;
+        if (
+          this.dataStream &&
+          this.currentToolCallId &&
+          toolResult !== undefined
+        ) {
+          this.dataStream.write({
+            type: "tool-output-available",
+            toolCallId: this.currentToolCallId,
+            output: toolResult,
+          });
+        }
+        return toolResult;
+      } finally {
+        if (interval) clearInterval(interval);
+        if (this.abortSignal) {
+          this.abortSignal.removeEventListener("abort", abortHandler);
+        }
+        this.clearCallContext();
+      }
     };
     return safe(() => this.logger.info("tool call", toolName))
       .ifOk(() => this.scheduleAutoDisconnect()) // disconnect if autoDisconnectSeconds is set
