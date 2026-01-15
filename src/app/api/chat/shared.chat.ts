@@ -440,18 +440,14 @@ export const loadTaskTools = (opt: {
   userId: string;
 }) =>
   safe(() => {
+    if (!opt.mentions?.length) return {} as Record<string, Tool>;
+
     const tools = buildTaskDefaultTools(opt.dataStream, opt.userId);
-    if (opt.mentions?.length) {
-      const taskMentions = opt.mentions.filter((m) => m.type === "task");
-      if (taskMentions.length) {
-        return Object.fromEntries(
-          Object.entries(tools).filter(([name]) =>
-            taskMentions.some((m) => m.name === name),
-          ),
-        );
-      }
-    }
-    return tools;
+    const taskMentions = opt.mentions.filter((m) => m.type === "task");
+    if (taskMentions.length === 0) return {} as Record<string, Tool>;
+
+    const mentionNames = new Set(taskMentions.map((m) => m.name));
+    return objectFlow(tools).filter((_tool, name) => mentionNames.has(name));
   }).orElse({} as Record<string, Tool>);
 
 export const loadAppDefaultTools = (opt?: {
