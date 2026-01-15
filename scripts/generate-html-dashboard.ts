@@ -397,7 +397,6 @@ function generateHTML(data: DashboardData): string {
   const outputTokensData = dailyTokenStats
     .map((s) => s.output_tokens)
     .join(",");
-  const _totalTokensData = dailyTokenStats.map((s) => s.total_tokens).join(",");
 
   // 用户表格行
   const tableRows = userStats

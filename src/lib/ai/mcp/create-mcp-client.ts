@@ -1,4 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { type RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
+
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -37,6 +39,18 @@ const CONNET_TIMEOUT = IS_VERCEL_ENV ? 30000 : 120000;
 const MCP_MAX_TOTAL_TIMEOUT = process.env.MCP_MAX_TOTAL_TIMEOUT
   ? parseInt(process.env.MCP_MAX_TOTAL_TIMEOUT, 10)
   : undefined;
+
+function buildRequestOptions(
+  clientSessionTimeoutSeconds?: number,
+  overrides?: RequestOptions,
+): RequestOptions | undefined {
+  const baseOptions =
+    clientSessionTimeoutSeconds === undefined
+      ? undefined
+      : { timeout: clientSessionTimeoutSeconds * 1000 };
+  const mergedOptions = { ...(baseOptions ?? {}), ...(overrides ?? {}) };
+  return Object.keys(mergedOptions).length === 0 ? undefined : mergedOptions;
+}
 
 /**
  * Client class for Model Context Protocol (MCP) server connections
@@ -224,6 +238,7 @@ export class MCPClient {
 
         await withTimeout(
           client.connect(this.transport, {
+            timeout: MCP_MAX_TOTAL_TIMEOUT,
             maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
           }),
           CONNET_TIMEOUT,
@@ -242,6 +257,7 @@ export class MCPClient {
           });
           await withTimeout(
             client.connect(this.transport, {
+              timeout: MCP_MAX_TOTAL_TIMEOUT,
               maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
             }),
             CONNET_TIMEOUT,
@@ -274,6 +290,7 @@ export class MCPClient {
             try {
               await withTimeout(
                 client.connect(this.transport, {
+                  timeout: MCP_MAX_TOTAL_TIMEOUT,
                   maxTotalTimeout: MCP_MAX_TOTAL_TIMEOUT,
                 }),
                 CONNET_TIMEOUT,
@@ -360,10 +377,27 @@ export class MCPClient {
       if (this.status === "authorizing") {
         throw new Error("OAuth authorization required. Try Refresh MCP Client");
       }
-      return client?.callTool({
-        name: toolName,
-        arguments: input as Record<string, unknown>,
+
+      const requestOptions = buildRequestOptions(MCP_MAX_TOTAL_TIMEOUT, {
+        timeout: MCP_MAX_TOTAL_TIMEOUT,
       });
+
+      // // Handle logging notifications
+      // client.setNotificationHandler(LoggingMessageNotificationSchema, ({ params }) => {
+      //   this.loggingCallback?.({
+      //     level: params.level,
+      //     data: typeof params.data === "string" ? params.data : JSON.stringify(params.data),
+      //   });
+      // });
+
+      return client?.callTool(
+        {
+          name: toolName,
+          arguments: input as Record<string, unknown>,
+        },
+        undefined,
+        requestOptions,
+      );
     };
     return safe(() => this.logger.info("tool call", toolName))
       .ifOk(() => this.scheduleAutoDisconnect()) // disconnect if autoDisconnectSeconds is set
