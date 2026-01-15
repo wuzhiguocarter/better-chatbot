@@ -1,5 +1,9 @@
 "use client";
 
+import { UploadedFile, appStore } from "@/app/store";
+import { useThreadFilesContext } from "@/app/store";
+import { UIMessage, UseChatHelpers } from "@ai-sdk/react";
+import { ChatMention, ChatModel } from "app-types/chat";
 import {
   AudioWaveformIcon,
   ChevronDown,
@@ -13,31 +17,22 @@ import {
   Square,
   XIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "ui/button";
-import { UIMessage, UseChatHelpers } from "@ai-sdk/react";
-import { SelectModel } from "./select-model";
-import { appStore, UploadedFile } from "@/app/store";
-import { useThreadFilesContext } from "@/app/store";
 import { useShallow } from "zustand/shallow";
-import { ChatMention, ChatModel } from "app-types/chat";
-import dynamic from "next/dynamic";
+import { SelectModel } from "./select-model";
 import { ToolModeDropdown } from "./tool-mode-dropdown";
 
-import { ToolSelectDropdown } from "./tool-select-dropdown";
-import { Tooltip, TooltipContent, TooltipTrigger } from "ui/tooltip";
-import { useTranslations } from "next-intl";
+import { useThreadFileUploader } from "@/hooks/use-thread-file-uploader";
+import { cn } from "@/lib/utils";
 import { Editor } from "@tiptap/react";
 import { WorkflowSummary } from "app-types/workflow";
-import { Avatar, AvatarFallback, AvatarImage } from "ui/avatar";
-import equal from "lib/equal";
-import { MCPIcon } from "ui/mcp-icon";
 import { DefaultToolName } from "lib/ai/tools";
-import { DefaultToolIcon } from "./default-tool-icon";
-import { OpenAIIcon } from "ui/openai-icon";
-import { GrokIcon } from "ui/grok-icon";
+import equal from "lib/equal";
+import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback, AvatarImage } from "ui/avatar";
 import { ClaudeIcon } from "ui/claude-icon";
-import { GeminiIcon } from "ui/gemini-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,16 +43,21 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { useThreadFileUploader } from "@/hooks/use-thread-file-uploader";
+import { GeminiIcon } from "ui/gemini-icon";
+import { GrokIcon } from "ui/grok-icon";
+import { MCPIcon } from "ui/mcp-icon";
+import { OpenAIIcon } from "ui/openai-icon";
+import { Tooltip, TooltipContent, TooltipTrigger } from "ui/tooltip";
+import { DefaultToolIcon } from "./default-tool-icon";
+import { ToolSelectDropdown } from "./tool-select-dropdown";
 
-import { EMOJI_DATA } from "lib/const";
-import { AgentSummary } from "app-types/agent";
-import { FileUIPart, TextUIPart } from "ai";
-import { toast } from "sonner";
-import { isFilePartSupported, isIngestSupported } from "@/lib/ai/file-support";
 import { useChatModels } from "@/hooks/queries/use-chat-models";
-import { processDocument, isRAGFlowSupported } from "@/lib/ragflow-client";
+import { isFilePartSupported, isIngestSupported } from "@/lib/ai/file-support";
+import { isRAGFlowSupported, processDocument } from "@/lib/ragflow-client";
+import { FileUIPart, TextUIPart } from "ai";
+import { AgentSummary } from "app-types/agent";
+import { EMOJI_DATA } from "lib/const";
+import { toast } from "sonner";
 
 interface PromptInputProps {
   placeholder?: string;
@@ -274,7 +274,7 @@ export default function PromptInput({
       if (fileInputRef.current) fileInputRef.current.value = "";
       setIsUploadDropdownOpen(false);
     },
-    [uploadFiles, threadId, providers, globalModel],
+    [uploadFiles, threadId],
   );
 
   const handleGenerateImage = useCallback(
@@ -299,6 +299,58 @@ export default function PromptInput({
       editorRef.current?.commands.focus();
     },
     [threadId, editorRef],
+  );
+
+  const handlePaste = useCallback(
+    async (files: File[]) => {
+      if (!threadId) return;
+      if (files.length === 0) return;
+
+      await uploadFiles(files);
+
+      const currentThreadFiles =
+        appStore.getState().threadFiles[threadId] ?? [];
+
+      for (const file of files) {
+        if (!isAudioOrFile(file)) continue;
+
+        const uploadedFile = currentThreadFiles.find(
+          (f) => f.name === file.name,
+        );
+        if (!uploadedFile) {
+          console.error("Uploaded file not found:", file.name);
+          continue;
+        }
+
+        try {
+          setThreadFileParseStatus(threadId, uploadedFile.id, "UPLOADING", {
+            name: file.name,
+          });
+
+          const result = await processDocument(file);
+
+          setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
+            documentId: result.documentId,
+          });
+
+          if (!result.success || !result.chunks.length) {
+            setThreadFileParseStatus(threadId, uploadedFile.id, "ERROR", {
+              name: file.name,
+              documentId: result.documentId,
+              error: "Parse failed",
+            });
+            continue;
+          }
+
+          setThreadFileChunks(threadId, uploadedFile.id, result.chunks);
+        } catch (err) {
+          console.error("RAGFlow error:", err);
+        }
+      }
+
+      toast.success(`已粘贴 ${files.length} 个文件`);
+    },
+    [uploadFiles, threadId, setThreadFileParseStatus, setThreadFileChunks],
   );
 
   const addMention = useCallback(
@@ -599,6 +651,7 @@ export default function PromptInput({
                   ref={editorRef}
                   disabledMention={disabledMention}
                   onFocus={onFocus}
+                  onPaste={handlePaste}
                 />
               </div>
               <div className="flex w-full items-center z-30">

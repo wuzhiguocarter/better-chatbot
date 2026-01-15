@@ -1,23 +1,23 @@
 "use client";
 import Mention from "@tiptap/extension-mention";
 import {
+  Editor,
   EditorContent,
   Range,
-  useEditor,
   UseEditorOptions,
-  Editor,
+  useEditor,
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TipTapMentionJsonContent } from "app-types/util";
 import { cn } from "lib/utils";
 import {
   FC,
+  RefObject,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
@@ -39,6 +39,7 @@ interface MentionInputProps {
   onFocus?: () => void;
   onBlur?: () => void;
   fullWidthSuggestion?: boolean;
+  onPaste?: (files: File[]) => void;
   MentionItem?: FC<{
     label: string;
     id: string;
@@ -67,6 +68,7 @@ export default function MentionInput({
   onFocus,
   onBlur,
   fullWidthSuggestion = false,
+  onPaste,
 }: MentionInputProps) {
   const [open, setOpen] = useState(false);
   const position = useRef<{
@@ -191,9 +193,18 @@ export default function MentionInput({
           class:
             "w-full max-h-80 min-h-[2rem] break-words overflow-y-auto resize-none focus:outline-none px-2 py-1 prose prose-sm dark:prose-invert ",
         },
+        handlePaste: (_view, event, _slice) => {
+          const files = Array.from(event.clipboardData?.files || []);
+          if (files.length > 0) {
+            event.preventDefault();
+            onPaste?.(files);
+            return true;
+          }
+          return false;
+        },
       },
     };
-  }, [disabled, MentionItem, suggestionChar, onChange]);
+  }, [disabled, MentionItem, suggestionChar, onChange, onPaste]);
 
   const editor = useEditor(editorConfig);
 
