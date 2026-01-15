@@ -426,13 +426,12 @@ export class MCPClient {
 
         if (this.dataStream && this.currentToolCallId) {
           interval = setInterval(() => {
-            if (latestResult === undefined) return;
             this.dataStream?.write({
               type: "tool-output-available",
               toolCallId: this.currentToolCallId!,
               output: latestResult,
             });
-          }, 1000);
+          }, 6000);
         }
 
         // // Handle logging notifications
