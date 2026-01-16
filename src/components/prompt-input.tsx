@@ -249,7 +249,13 @@ export default function PromptInput({
             name: file.name,
           });
 
-          const result = await processDocument(file);
+          const result = await processDocument(file, (progress, status) => {
+            if (status === "PARSING") {
+              setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
+                progress,
+              });
+            }
+          });
 
           setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
             documentId: result.documentId,
@@ -327,7 +333,13 @@ export default function PromptInput({
             name: file.name,
           });
 
-          const result = await processDocument(file);
+          const result = await processDocument(file, (progress, status) => {
+            if (status === "PARSING") {
+              setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
+                progress,
+              });
+            }
+          });
 
           setThreadFileParseStatus(threadId, uploadedFile.id, "PARSING", {
             documentId: result.documentId,
@@ -460,6 +472,16 @@ export default function PromptInput({
       toast.error("Please wait for files to finish uploading before sending.");
       return;
     }
+    const isAnyFileParsing = uploadedFiles.some((file) => {
+      const fileStatus = threadFilesContext?.[file.id];
+      return (
+        fileStatus?.status === "PARSING" || fileStatus?.status === "UPLOADING"
+      );
+    });
+    if (isAnyFileParsing) {
+      toast.error("请等待文件解析完成后再发送");
+      return;
+    }
     const userMessage = input?.trim() || "";
     if (userMessage.length === 0) return;
 
@@ -551,6 +573,11 @@ export default function PromptInput({
       },
     }));
   };
+
+  const isAnyFileParsing = uploadedFiles.some((file) => {
+    const fileStatus = threadFilesContext?.[file.id];
+    return fileStatus?.status === "PARSING";
+  });
 
   // Handle ESC key to clear mentions
   useEffect(() => {
@@ -805,11 +832,18 @@ export default function PromptInput({
                     onClick={() => {
                       if (isLoading) {
                         onStop();
+                      } else if (isAnyFileParsing) {
+                        toast.error("请等待文件解析完成后再发送");
                       } else {
                         submit();
                       }
                     }}
-                    className="fade-in animate-in cursor-pointer text-muted-foreground rounded-full p-2 bg-secondary hover:bg-accent-foreground hover:text-accent transition-all duration-200"
+                    className={cn(
+                      "fade-in animate-in text-muted-foreground rounded-full p-2 transition-all duration-200",
+                      isAnyFileParsing
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer bg-secondary hover:bg-accent-foreground hover:text-accent",
+                    )}
                   >
                     {isLoading ? (
                       <Square
@@ -972,7 +1006,17 @@ export default function PromptInput({
                               {fileStatus.status === "PARSING" && (
                                 <>
                                   <Loader2 className="size-3 animate-spin" />
-                                  <span className="text-[10px]">解析中...</span>
+                                  <span className="text-[10px]">
+                                    解析中 {fileStatus.progress ?? 0}%
+                                  </span>
+                                  <div className="w-8 h-1 bg-muted rounded-full overflow-hidden ml-1">
+                                    <div
+                                      className="h-full bg-primary transition-all duration-300"
+                                      style={{
+                                        width: `${fileStatus.progress ?? 0}%`,
+                                      }}
+                                    />
+                                  </div>
                                 </>
                               )}
                               {fileStatus.status === "READY" && (
